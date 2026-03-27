@@ -496,12 +496,19 @@ function updateFunnel(key) {
     {label:'Showed',    val:m.showed, color:'#c8f04a', pct:m.booked ? Math.round(m.showed/m.booked*100)+'%':'—'},
     {label:'Ventas',    val:m.sales,  color:'#4af09a', pct:m.showed ? Math.round(m.sales/m.showed*100)+'%':'—'},
   ];
+  const showRateFunnel   = m.showed + m.noshow > 0 ? Math.round(m.showed / (m.showed + m.noshow) * 100) : 0;
+  const closeRateFunnel  = m.showed > 0 ? Math.round(m.sales / m.showed * 100) : 0;
+  const funnelSteps = [
+    {label:'Bookearon', val:m.booked, color:'#4a8ff0', pct:null},
+    {label:'Showed',    val:m.showed, color:'#c8f04a', pct:showRateFunnel + '%'},
+    {label:'Ventas',    val:m.sales,  color:'#4af09a', pct:closeRateFunnel + '%'},
+  ];
   document.getElementById('funnel-container').innerHTML =
     `<div style="margin-bottom:0.5rem;font-size:11px;color:#7a7a85;text-transform:uppercase;letter-spacing:0.06em;">${monthLabel(key)}</div>` +
-    steps.map(s => `<div class="funnel-row">
+    funnelSteps.map(s => `<div class="funnel-row">
       <div class="funnel-label">${s.label}</div>
       <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:${m.booked ? Math.round(s.val/m.booked*100) : 0}%;background:${s.color}22;color:${s.color};">${s.val}</div></div>
-      <div class="funnel-rate">${s.pct ? `<span style="font-size:13px;font-weight:500;">${s.val}</span> <span style="font-size:10px;color:#7a7a85;">${s.pct}</span>` : `<span style="font-size:13px;font-weight:500;">${s.val}</span>`}</div>
+      <div class="funnel-rate">${s.pct ? `<span style="font-size:13px;font-weight:500;color:var(--text);">${s.val}</span>&nbsp;<span style="font-size:10px;color:#7a7a85;">${s.pct}</span>` : `<span style="font-size:13px;font-weight:500;color:var(--text);">${s.val}</span>`}</div>
     </div>`).join('');
 }
 
