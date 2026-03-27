@@ -127,7 +127,7 @@
       <div class="kpi-card" style="--card-accent: var(--warn)">
         <div class="kpi-label">Show rate</div>
         <div class="kpi-value" id="kpi-show">—</div>
-        <div class="kpi-meta">showed ÷ (showed + no-show)</div>
+        <div class="kpi-meta" id="kpi-show-abs" style="font-size:12px;margin-bottom:4px;">— showed</div>
         <div class="target-bar-wrap">
           <div class="target-bar-bg"><div class="target-bar-fill" id="bar-show" style="width:0%;background:var(--warn)"></div></div>
           <div class="target-label">Target: 75% | <span id="kpi-show-pct">—</span></div>
@@ -144,7 +144,7 @@
       <div class="kpi-card" style="--card-accent: var(--accent2)">
         <div class="kpi-label">Close rate</div>
         <div class="kpi-value" id="kpi-close">—</div>
-        <div class="kpi-meta">ventas ÷ showed</div>
+        <div class="kpi-meta" id="kpi-close-abs" style="font-size:12px;margin-bottom:4px;">— ventas de — showed</div>
         <div class="target-bar-wrap">
           <div class="target-bar-bg"><div class="target-bar-fill" id="bar-close" style="width:0%;background:var(--accent2)"></div></div>
           <div class="target-label">Target: 45% | <span id="kpi-close-pct">—</span></div>
@@ -442,8 +442,10 @@ function updateKPIs(curKey) {
 
   document.getElementById('kpi-booked').textContent    = cur.booked;
   document.getElementById('kpi-show').textContent      = showRate + '%';
+  document.getElementById('kpi-show-abs').textContent  = cur.showed + ' showed';
   document.getElementById('kpi-cancel').textContent    = cancelRate + '%';
   document.getElementById('kpi-close').textContent     = closeRate + '%';
+  document.getElementById('kpi-close-abs').textContent = cur.sales + ' ventas de ' + cur.showed + ' showed';
   document.getElementById('kpi-refunds').textContent   = cur.refunds || 0;
   document.getElementById('kpi-net-sales').textContent = netSales;
 
@@ -479,7 +481,7 @@ function updateKPIs(curKey) {
 
   const label = monthLabel(curKey).toUpperCase();
   const alerts = [];
-  if (cur.booked < 46)  alerts.push({color:'#f05a4a', text:`<strong>Volumen bajo:</strong> Solo ${cur.booked} bookeados en ${label}. Target es 38.`});
+  if (cur.booked < 46)  alerts.push({color:'#f05a4a', text:`<strong>Volumen bajo:</strong> Solo ${cur.booked} bookeados en ${label}. Target es 62.`});
   if (cancelRate > 25)  alerts.push({color:'#f0a84a', text:`<strong>Cancelaciones altas:</strong> ${cancelRate}% están cancelando en ${label}.`});
   if (showRate < 65)    alerts.push({color:'#f05a4a', text:`<strong>Show rate crítico:</strong> Solo ${showRate}% aparecieron en ${label}.`});
   if (closeRate >= 45)  alerts.push({color:'#4af09a', text:`<strong>Close rate sólido:</strong> ${closeRate}% de los que mostraron cerraron en ${label}.`});
