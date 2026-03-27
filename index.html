@@ -41,7 +41,7 @@
   .month-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; }
   .month-bar label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
   .month-bar select { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; font-family: var(--mono); font-size: 13px; outline: none; cursor: pointer; }
-  .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-bottom: 2rem; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; margin-bottom: 2rem; }
   .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; position: relative; overflow: hidden; }
   .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--card-accent, var(--border)); }
   .kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
@@ -137,11 +137,24 @@
         <div class="kpi-badge" id="badge-cancel">—</div>
       </div>
       <div class="kpi-card" style="--card-accent: var(--accent)">
-        <div class="kpi-label">Ventas</div>
+        <div class="kpi-label">Ventas brutas</div>
         <div class="kpi-value" id="kpi-sales">—</div>
         <div class="target-bar-wrap">
           <div class="target-bar-bg"><div class="target-bar-fill" id="bar-sales" style="width:0%"></div></div>
           <div class="target-label">Target: 17 | <span id="kpi-sales-pct">—</span></div>
+        </div>
+      </div>
+      <div class="kpi-card" style="--card-accent: #f05a4a">
+        <div class="kpi-label">Refunds</div>
+        <div class="kpi-value" id="kpi-refunds" style="color:var(--danger)">—</div>
+        <div class="kpi-meta">ventas que se reembolsaron</div>
+      </div>
+      <div class="kpi-card" style="--card-accent: var(--green)">
+        <div class="kpi-label">Ventas netas</div>
+        <div class="kpi-value" id="kpi-net-sales" style="color:var(--green)">—</div>
+        <div class="target-bar-wrap">
+          <div class="target-bar-bg"><div class="target-bar-fill" id="bar-net-sales" style="width:0%"></div></div>
+          <div class="target-label">Target: 17 | <span id="kpi-net-sales-pct">—</span></div>
         </div>
       </div>
     </div>
@@ -244,6 +257,7 @@ function processData(rows) {
   const iBooked = col('booked call (qualified)');
   const iStatus = col('call status show vs no-show');
   const iSale   = col('end in sale yes/no');
+  const iRefund = col('refund status');
 
   const monthly = {};
   for (let i = 1; i < rows.length; i++) {
@@ -252,13 +266,14 @@ function processData(rows) {
     const dt = parseDate((r[iApp] || '').trim());
     if (!dt) continue;
     const key = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;
-    if (!monthly[key]) monthly[key] = {booked:0,showed:0,noshow:0,cancelled:0,sales:0};
+    if (!monthly[key]) monthly[key] = {booked:0,showed:0,noshow:0,cancelled:0,sales:0,refunds:0};
     monthly[key].booked++;
     const cs = (r[iStatus] || '').trim().toLowerCase();
     if (cs === 'showed') monthly[key].showed++;
     else if (cs === 'no show') monthly[key].noshow++;
     else if (cs === 'cancelled') monthly[key].cancelled++;
     if ((r[iSale] || '').trim().toLowerCase() === 'yes') monthly[key].sales++;
+    if ((r[iRefund] || '').trim().toUpperCase() === 'TRUE') monthly[key].refunds++;
   }
   globalMonthly = monthly;
   renderDashboard(monthly);
@@ -282,17 +297,24 @@ function updateKPIs(curKey) {
   const cancelRate = cur.booked > 0 ? Math.round(cur.cancelled / cur.booked * 100) : 0;
   const closeRate  = cur.showed > 0 ? Math.round(cur.sales / cur.showed * 100) : 0;
 
-  document.getElementById('kpi-booked').textContent = cur.booked;
-  document.getElementById('kpi-show').textContent   = showRate + '%';
-  document.getElementById('kpi-cancel').textContent = cancelRate + '%';
-  document.getElementById('kpi-sales').textContent  = cur.sales;
+  const netSales = cur.sales - (cur.refunds || 0);
 
-  const bookedPct = Math.min(Math.round(cur.booked / TARGET_BOOKED * 100), 100);
-  const salesPct  = Math.min(Math.round(cur.sales  / TARGET_SALES  * 100), 100);
-  document.getElementById('bar-booked').style.width = bookedPct + '%';
-  document.getElementById('bar-sales').style.width  = salesPct + '%';
-  document.getElementById('kpi-booked-pct').textContent = bookedPct + '%';
-  document.getElementById('kpi-sales-pct').textContent  = salesPct + '%';
+  document.getElementById('kpi-booked').textContent   = cur.booked;
+  document.getElementById('kpi-show').textContent     = showRate + '%';
+  document.getElementById('kpi-cancel').textContent   = cancelRate + '%';
+  document.getElementById('kpi-sales').textContent    = cur.sales;
+  document.getElementById('kpi-refunds').textContent  = cur.refunds || 0;
+  document.getElementById('kpi-net-sales').textContent = netSales;
+
+  const bookedPct  = Math.min(Math.round(cur.booked  / TARGET_BOOKED * 100), 100);
+  const salesPct   = Math.min(Math.round(cur.sales   / TARGET_SALES  * 100), 100);
+  const netSalePct = Math.min(Math.round(netSales     / TARGET_SALES  * 100), 100);
+  document.getElementById('bar-booked').style.width    = bookedPct + '%';
+  document.getElementById('bar-sales').style.width     = salesPct + '%';
+  document.getElementById('bar-net-sales').style.width = netSalePct + '%';
+  document.getElementById('kpi-booked-pct').textContent    = bookedPct + '%';
+  document.getElementById('kpi-sales-pct').textContent     = salesPct + '%';
+  document.getElementById('kpi-net-sales-pct').textContent = netSalePct + '%';
 
   const setBadge = (id, val, good, warn, invert) => {
     const el = document.getElementById(id);
@@ -316,6 +338,7 @@ function updateKPIs(curKey) {
   if (cancelRate > 25)  alerts.push({color:'#f0a84a', text:`<strong>Cancelaciones altas:</strong> ${cancelRate}% están cancelando en ${label}.`});
   if (showRate < 65)    alerts.push({color:'#f05a4a', text:`<strong>Show rate crítico:</strong> Solo ${showRate}% aparecieron en ${label}.`});
   if (closeRate >= 45)  alerts.push({color:'#4af09a', text:`<strong>Close rate sólido:</strong> ${closeRate}% de los que mostraron cerraron en ${label}.`});
+  if ((cur.refunds||0) > 0) alerts.push({color:'#f05a4a', text:`<strong>Refunds en ${label}:</strong> ${cur.refunds} venta(s) reembolsada(s). Ventas netas: ${netSales}.`});
   document.getElementById('alerts-container').innerHTML = alerts.map(a =>
     `<div class="alert"><div class="alert-dot" style="background:${a.color}"></div><div class="alert-text">${a.text}</div></div>`
   ).join('');
