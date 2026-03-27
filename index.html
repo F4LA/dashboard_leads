@@ -409,6 +409,7 @@ function processData(rows) {
   const iStatus = col('call status show vs no-show');
   const iSale   = col('end in sale yes/no');
   const iRefund = col('refund status');
+  const iSource = col('last attribution');
 
   const monthly = {};
   for (let i = 1; i < rows.length; i++) {
@@ -417,13 +418,28 @@ function processData(rows) {
     const dt = parseDate((r[iApp] || '').trim());
     if (!dt) continue;
     const key = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;
-    if (!monthly[key]) monthly[key] = {booked:0,showed:0,noshow:0,cancelled:0,sales:0,refunds:0};
+    if (!monthly[key]) monthly[key] = {booked:0,showed:0,noshow:0,cancelled:0,sales:0,refunds:0,sources:{}};
+    const rawSrc = (r[iSource] || '').trim().toLowerCase();
+    let src = 'Other';
+    if (rawSrc.includes('instagram')) src = 'Instagram';
+    else if (rawSrc.includes('direct')) src = 'Direct Traffic';
+    else if (rawSrc.includes('setter')) src = 'Setter';
+    else if (rawSrc.includes('podcast')) src = 'Podcast';
+    else if (rawSrc.includes('organic')) src = 'Organic Search';
+    else if (rawSrc.includes('email') || rawSrc.includes('lead magnet')) src = 'Email / Lead Magnet';
+    else if (rawSrc.includes('meta') || rawSrc.includes('facebook')) src = 'Meta / Facebook';
+    else if (rawSrc.includes('joey')) src = 'Joey Atlas';
+    else if (rawSrc.includes('youtube')) src = 'YouTube';
+    else if (rawSrc.includes('linkedin')) src = 'LinkedIn';
+    else if (rawSrc.includes('referral') || rawSrc.includes('referal')) src = 'Referral';
+    if (!monthly[key].sources[src]) monthly[key].sources[src] = {booked:0,showed:0,noshow:0,sales:0};
+    monthly[key].sources[src].booked++;
     monthly[key].booked++;
     const cs = (r[iStatus] || '').trim().toLowerCase();
-    if (cs === 'showed') monthly[key].showed++;
-    else if (cs === 'no show') monthly[key].noshow++;
+    if (cs === 'showed') { monthly[key].showed++; monthly[key].sources[src].showed++; }
+    else if (cs === 'no show') { monthly[key].noshow++; monthly[key].sources[src].noshow++; }
     else if (cs === 'cancelled') monthly[key].cancelled++;
-    if ((r[iSale] || '').trim().toLowerCase() === 'yes') monthly[key].sales++;
+    if ((r[iSale] || '').trim().toLowerCase() === 'yes') { monthly[key].sales++; monthly[key].sources[src].sales++; }
     if ((r[iRefund] || '').trim().toUpperCase() === 'TRUE') monthly[key].refunds++;
   }
   globalMonthly = monthly;
@@ -440,6 +456,8 @@ function onMonthChange() {
   const key = document.getElementById('month-selector').value;
   updateKPIs(key);
   updateFunnel(key);
+  updateRecommendations(key);
+  updateSourceTable(key);
 }
 
 function updateKPIs(curKey) {
@@ -525,6 +543,98 @@ function updateFunnel(key) {
     </div>`).join('');
 }
 
+
+function updateRecommendations(curKey) {
+  const cur = globalMonthly[curKey] || {booked:0,showed:0,noshow:0,cancelled:0,sales:0};
+  const showRate   = cur.showed + cur.noshow > 0 ? Math.round(cur.showed / (cur.showed + cur.noshow) * 100) : 0;
+  const cancelRate = cur.booked > 0 ? Math.round(cur.cancelled / cur.booked * 100) : 0;
+  const closeRate  = cur.showed > 0 ? Math.round(cur.sales / cur.showed * 100) : 0;
+
+  const issues = [];
+  if (cur.booked < 46)    issues.push({color:'var(--danger)', icon:'↓', title:'Low volume', text:'You don't have enough booked calls this month. Focus on increasing lead generation — review which channels are active and push for more outreach.'});
+  if (cancelRate > 28)    issues.push({color:'var(--warn)',   icon:'✕', title:'High cancellations', text:'Too many people are cancelling before the call. Strengthen commitment at booking and add follow-up reminders between booking and the call date.'});
+  if (showRate < 70)      issues.push({color:'var(--warn)',   icon:'↓', title:'Low show rate', text:'People are booking but not showing up. Improve pre-call follow-up — send reminders 24h and 1h before the call.'});
+  if (closeRate < 35)     issues.push({color:'var(--danger)', icon:'↓', title:'Low close rate', text:'People are showing up but not buying. The problem is on the sales call — review the pitch, how objections are handled, and the offer.'});
+
+  const container = document.getElementById('recommendations-section');
+  if (issues.length === 0) {
+    container.innerHTML = `<div style="background:rgba(74,240,154,0.06);border:1px solid rgba(74,240,154,0.2);border-radius:var(--radius);padding:1rem 1.25rem;display:flex;align-items:center;gap:10px;">
+      <div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;"></div>
+      <div style="font-size:13px;color:var(--muted);"><strong style="color:var(--text);">Everything on track.</strong> All metrics are within target. Stay consistent and keep pushing volume.</div>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div style="font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Recommendations</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;">
+      ${issues.map(i => `<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid ${i.color};border-radius:var(--radius);padding:1rem 1.25rem;">
+        <div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:4px;">${i.icon} ${i.title}</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6;">${i.text}</div>
+      </div>`).join('')}
+    </div>`;
+}
+
+function updateSourceTable(curKey) {
+  const keys = Object.keys(globalMonthly).sort();
+  const curIdx = keys.indexOf(curKey);
+  const last6 = keys.slice(Math.max(0, curIdx - 5), curIdx + 1);
+
+  const sourceTotals = {};
+  for (const k of last6) {
+    const sources = globalMonthly[k].sources || {};
+    for (const [src, d] of Object.entries(sources)) {
+      if (!sourceTotals[src]) sourceTotals[src] = {booked:0,showed:0,sales:0};
+      sourceTotals[src].booked += d.booked;
+      sourceTotals[src].showed += d.showed || 0;
+      sourceTotals[src].sales  += d.sales  || 0;
+    }
+  }
+
+  const rows = Object.entries(sourceTotals)
+    .filter(([,d]) => d.booked >= 2)
+    .sort((a,b) => b[1].booked - a[1].booked);
+
+  const maxBooked = Math.max(...rows.map(([,d]) => d.booked), 1);
+
+  const closeColor = (pct) => pct >= 45 ? 'var(--green)' : pct >= 35 ? 'var(--warn)' : 'var(--danger)';
+  const bookedColor = (n) => n >= 10 ? 'var(--green)' : n >= 5 ? 'var(--warn)' : 'var(--danger)';
+
+  const html = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <thead>
+      <tr style="border-bottom:1px solid var(--border);">
+        <th style="text-align:left;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Source</th>
+        <th style="text-align:left;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;min-width:140px;">Volume</th>
+        <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Booked</th>
+        <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Showed</th>
+        <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Sales</th>
+        <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Close rate</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows.map(([src, d], i) => {
+        const closeRate = d.showed > 0 ? Math.round(d.sales / d.showed * 100) : 0;
+        const barW = Math.round(d.booked / maxBooked * 100);
+        const border = i < rows.length - 1 ? 'border-bottom:1px solid var(--border);' : '';
+        return `<tr style="${border}">
+          <td style="padding:10px 16px;font-weight:500;">${src}</td>
+          <td style="padding:10px 16px;">
+            <div style="background:rgba(255,255,255,0.05);border-radius:3px;height:6px;width:100%;">
+              <div style="background:var(--accent2);border-radius:3px;height:6px;width:${barW}%;"></div>
+            </div>
+          </td>
+          <td style="padding:10px 16px;text-align:center;font-family:var(--mono);color:${bookedColor(d.booked)};">${d.booked}</td>
+          <td style="padding:10px 16px;text-align:center;font-family:var(--mono);">${d.showed}</td>
+          <td style="padding:10px 16px;text-align:center;font-family:var(--mono);">${d.sales}</td>
+          <td style="padding:10px 16px;text-align:center;font-family:var(--mono);font-weight:500;color:${closeRate > 0 ? closeColor(closeRate) : 'var(--muted)'};">${closeRate > 0 ? closeRate + '%' : '—'}</td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>`;
+
+  document.getElementById('source-table-container').innerHTML = html;
+}
+
 function renderDashboard(monthly) {
   const keys = Object.keys(monthly).sort().filter(k => k >= '2024-12');
 
@@ -545,6 +655,8 @@ function renderDashboard(monthly) {
 
   updateKPIs(sel.value);
   updateFunnel(sel.value);
+  updateRecommendations(sel.value);
+  updateSourceTable(sel.value);
 
   // Charts (always full history)
   const labels    = keys.map(monthLabel);
