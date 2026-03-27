@@ -201,7 +201,7 @@ async function loadData() {
   document.getElementById('loading').style.display = 'flex';
   document.getElementById('dashboard').style.display = 'none';
   try {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/A:Z?key=${apiKey}`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Leads%20applied!A:Z?key=${apiKey}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error('API error ' + res.status);
     const json = await res.json();
