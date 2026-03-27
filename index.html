@@ -388,14 +388,16 @@ async function loadData() {
     if (!res.ok) throw new Error('API error ' + res.status);
     const json = await res.json();
     const rows = json.values;
+
+    // DEBUG: show headers and first row
+    console.log('=== HEADERS ===');
+    if (rows && rows[0]) rows[0].forEach((h,i) => console.log(i, h));
+    console.log('=== ROW 1 ===');
+    if (rows && rows[1]) rows[1].forEach((v,i) => console.log(i, v));
+
     processData(rows);
   } catch(e) {
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('setup-screen').style.display = 'flex';
-    document.getElementById('setup-error').style.display = 'block';
-    localStorage.removeItem('gsheets_api_key');
-    apiKey = '';
-  }
+    console
 }
 
 function parseDate(str) {
@@ -417,11 +419,11 @@ function processData(rows) {
   if (!rows || rows.length < 2) return;
   const headers = rows[0].map(h => h.trim().toLowerCase());
 
-  const col = name => headers.findIndex(h => h.includes(name));
+  const col = name => headers.findIndex(h => h.trim().toLowerCase() === name.toLowerCase());
   const iApp    = col('application date');
-  const iBooked = col('booked call');
-  const iStatus = col('call status');
-  const iSale   = col('end in sale');
+  const iBooked = col('booked call (qualified)');
+  const iStatus = col('call status show vs no-show');
+  const iSale   = col('end in sale yes/no');
 
   const monthly = {};
 
