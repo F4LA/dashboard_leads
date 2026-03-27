@@ -125,7 +125,7 @@
         </div>
       </div>
       <div class="kpi-card" style="--card-accent: var(--warn)">
-        <div class="kpi-label">Show rate</div>
+        <div class="kpi-label">Calls Showed (Show Rate)</div>
         <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;">
           <div class="kpi-value" id="kpi-show-abs" style="margin-bottom:0;">—</div>
           <div style="font-size:16px;color:var(--muted);font-family:var(--mono);" id="kpi-show">(—)</div>
@@ -145,7 +145,7 @@
         <div class="kpi-badge" id="badge-cancel">—</div>
       </div>
       <div class="kpi-card" style="--card-accent: var(--accent2)">
-        <div class="kpi-label">Close rate</div>
+        <div class="kpi-label">Sales (Close Rate)</div>
         <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;">
           <div class="kpi-value" id="kpi-close-abs" style="margin-bottom:0;">—</div>
           <div style="font-size:16px;color:var(--muted);font-family:var(--mono);" id="kpi-close">(—)</div>
@@ -295,44 +295,6 @@
       </div>
     </div>
 
-    <!-- Knowledge Base -->
-    <div style="margin-top:2.5rem;padding-top:2rem;border-top:1px solid var(--border);">
-      <div style="font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1.5rem;">Knowledge base — cómo leer este dashboard</div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
-          <div style="font-size:13px;font-weight:500;color:var(--accent2);margin-bottom:8px;">¿Qué es un lead "bookeado"?</div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.7;">En el proceso actual, una persona bookeada es alguien que completó la aplicación <strong style="color:var(--text);">y</strong> agendó una llamada de ventas al mismo tiempo. Antes eran dos pasos separados (primero aplicaban, luego se les invitaba a agendar), lo que generaba muchas aplicaciones sin llamada. El proceso actual es más limpio: si aplicas, ya tienes call agendada.</div>
-        </div>
-
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
-          <div style="font-size:13px;font-weight:500;color:var(--warn);margin-bottom:8px;">¿Qué es el show rate y por qué importa?</div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.7;">El show rate mide cuántas personas de las que bookearon <strong style="color:var(--text);">realmente aparecen</strong> a la llamada. Se calcula como showed ÷ (showed + no-show), <strong style="color:var(--text);">sin contar cancelaciones</strong> — porque una cancelación es diferente a un no-show: el que cancela avisó, el que no muestra simplemente no apareció. Un show rate bajo casi siempre indica falta de seguimiento pre-llamada.</div>
-        </div>
-
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
-          <div style="font-size:13px;font-weight:500;color:var(--danger);margin-bottom:8px;">¿Qué diferencia hay entre cancelación y no-show?</div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.7;"><strong style="color:var(--text);">Cancelación:</strong> la persona avisó que no puede y canceló la llamada. Hay oportunidad de reagendar.<br><br><strong style="color:var(--text);">No-show:</strong> la persona simplemente no apareció sin avisar. Es más difícil de recuperar.<br><br>Las cancelaciones altas (más del 25%) generalmente indican que la persona no estaba suficientemente comprometida al momento de agendar, o que no hubo suficiente seguimiento entre el booking y la llamada.</div>
-        </div>
-
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
-          <div style="font-size:13px;font-weight:500;color:var(--accent2);margin-bottom:8px;">¿Cómo leer el embudo?</div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.7;">El embudo muestra tres pasos clave del mes seleccionado:<br><br><strong style="color:var(--text);">Bookearon</strong> → cuántas personas agendaron llamada.<br><strong style="color:var(--text);">Showed</strong> → cuántas aparecieron (número + % sobre bookeados).<br><strong style="color:var(--text);">Ventas</strong> → cuántas compraron (número + % sobre showed).<br><br>El porcentaje en cada paso te dice la salud del proceso independientemente del volumen del mes.</div>
-        </div>
-
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
-          <div style="font-size:13px;font-weight:500;color:var(--green);margin-bottom:8px;">Ventas brutas vs ventas netas</div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.7;"><strong style="color:var(--text);">Ventas brutas:</strong> total de personas que compraron ese mes, incluyendo las que después pidieron reembolso.<br><br><strong style="color:var(--text);">Ventas netas:</strong> ventas brutas − refunds. Este es el número real que importa para medir el negocio.<br><br>El close rate se calcula sobre ventas brutas para medir la efectividad del equipo de ventas. Las ventas netas miden el resultado financiero real.</div>
-        </div>
-
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
-          <div style="font-size:13px;font-weight:500;color:var(--danger);margin-bottom:8px;">¿Cuándo preocuparse por los refunds?</div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Históricamente el promedio es <strong style="color:var(--text);">1.4 refunds/mes</strong>. Tener 1 o 2 en un mes es completamente normal.<br><br>La alerta se activa cuando hay <strong style="color:var(--text);">3 o más</strong> en el mismo mes — eso indica un patrón que vale la pena revisar. El peor mes registrado fue octubre 2025 con 5 refunds.<br><br>Los refunds se cuentan por <strong style="color:var(--text);">fecha de venta</strong>, no por fecha del reembolso, para que todo quede dentro del mismo mes.</div>
-        </div>
-
-      </div>
-    </div>
   </main>
 </div>
 
