@@ -136,18 +136,16 @@
         <div class="kpi-meta">% de bookeados que cancelan</div>
         <div class="kpi-badge" id="badge-cancel">—</div>
       </div>
-      <div class="kpi-card" style="--card-accent: var(--accent)">
-        <div class="kpi-label">Ventas brutas</div>
-        <div class="kpi-value" id="kpi-sales">—</div>
-        <div class="target-bar-wrap">
-          <div class="target-bar-bg"><div class="target-bar-fill" id="bar-sales" style="width:0%"></div></div>
-          <div class="target-label">Target: 17 | <span id="kpi-sales-pct">—</span></div>
-        </div>
+      <div class="kpi-card" style="--card-accent: var(--accent2)">
+        <div class="kpi-label">Close rate</div>
+        <div class="kpi-value" id="kpi-close">—</div>
+        <div class="kpi-meta">ventas ÷ showed</div>
+        <div class="kpi-badge" id="badge-close">—</div>
       </div>
       <div class="kpi-card" style="--card-accent: #f05a4a">
         <div class="kpi-label">Refunds</div>
         <div class="kpi-value" id="kpi-refunds" style="color:var(--danger)">—</div>
-        <div class="kpi-meta">ventas que se reembolsaron</div>
+        <div class="kpi-meta">ventas reembolsadas</div>
       </div>
       <div class="kpi-card" style="--card-accent: var(--green)">
         <div class="kpi-label">Ventas netas</div>
@@ -299,21 +297,18 @@ function updateKPIs(curKey) {
 
   const netSales = cur.sales - (cur.refunds || 0);
 
-  document.getElementById('kpi-booked').textContent   = cur.booked;
-  document.getElementById('kpi-show').textContent     = showRate + '%';
-  document.getElementById('kpi-cancel').textContent   = cancelRate + '%';
-  document.getElementById('kpi-sales').textContent    = cur.sales;
-  document.getElementById('kpi-refunds').textContent  = cur.refunds || 0;
+  document.getElementById('kpi-booked').textContent    = cur.booked;
+  document.getElementById('kpi-show').textContent      = showRate + '%';
+  document.getElementById('kpi-cancel').textContent    = cancelRate + '%';
+  document.getElementById('kpi-close').textContent     = closeRate + '%';
+  document.getElementById('kpi-refunds').textContent   = cur.refunds || 0;
   document.getElementById('kpi-net-sales').textContent = netSales;
 
-  const bookedPct  = Math.min(Math.round(cur.booked  / TARGET_BOOKED * 100), 100);
-  const salesPct   = Math.min(Math.round(cur.sales   / TARGET_SALES  * 100), 100);
-  const netSalePct = Math.min(Math.round(netSales     / TARGET_SALES  * 100), 100);
+  const bookedPct  = Math.min(Math.round(cur.booked / TARGET_BOOKED * 100), 100);
+  const netSalePct = Math.min(Math.round(netSales   / TARGET_SALES  * 100), 100);
   document.getElementById('bar-booked').style.width    = bookedPct + '%';
-  document.getElementById('bar-sales').style.width     = salesPct + '%';
   document.getElementById('bar-net-sales').style.width = netSalePct + '%';
   document.getElementById('kpi-booked-pct').textContent    = bookedPct + '%';
-  document.getElementById('kpi-sales-pct').textContent     = salesPct + '%';
   document.getElementById('kpi-net-sales-pct').textContent = netSalePct + '%';
 
   const setBadge = (id, val, good, warn, invert) => {
@@ -331,6 +326,7 @@ function updateKPIs(curKey) {
   };
   setBadge('badge-show',   showRate,   TARGET_SHOW,   65, false);
   setBadge('badge-cancel', cancelRate, TARGET_CANCEL, 25, true);
+  setBadge('badge-close',  closeRate,  45,            35, false);
 
   const label = monthLabel(curKey).toUpperCase();
   const alerts = [];
