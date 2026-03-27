@@ -221,46 +221,53 @@
             <tr style="border-bottom:1px solid var(--border);">
               <th style="text-align:left;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Métrica</th>
               <th style="text-align:left;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Qué mide</th>
-              <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Target</th>
+              <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Target mes</th>
+              <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Target semana</th>
               <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Alerta si...</th>
             </tr>
           </thead>
           <tbody>
             <tr style="border-bottom:1px solid var(--border);">
-              <td style="padding:12px 16px;font-weight:500;">Bookeados/mes<br><span style="font-size:11px;color:var(--muted);font-weight:400;">el más importante</span></td>
-              <td style="padding:12px 16px;color:var(--muted);font-size:12px;">Personas que agendaron una llamada de ventas ese mes</td>
+              <td style="padding:12px 16px;font-weight:500;">Bookeados<br><span style="font-size:11px;color:var(--muted);font-weight:400;">el más importante</span></td>
+              <td style="padding:12px 16px;color:var(--muted);font-size:12px;">Personas que agendaron una llamada de ventas</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">≥ 38</td>
-              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&lt; 30</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">~10</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&lt; 30/mes</td>
             </tr>
             <tr style="border-bottom:1px solid var(--border);">
               <td style="padding:12px 16px;font-weight:500;">Show rate<br><span style="font-size:11px;color:var(--muted);font-weight:400;">showed ÷ (showed + no-show)</span></td>
               <td style="padding:12px 16px;color:var(--muted);font-size:12px;">De los que bookearon, cuántos realmente aparecieron a la llamada</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">≥ 75%</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">—</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&lt; 65%</td>
             </tr>
             <tr style="border-bottom:1px solid var(--border);">
               <td style="padding:12px 16px;font-weight:500;">Cancelaciones<br><span style="font-size:11px;color:var(--muted);font-weight:400;">% de bookeados que cancelan</span></td>
               <td style="padding:12px 16px;color:var(--muted);font-size:12px;">Personas que agendaron pero cancelaron antes de la llamada</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">≤ 15%</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">—</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&gt; 25%</td>
             </tr>
             <tr style="border-bottom:1px solid var(--border);">
               <td style="padding:12px 16px;font-weight:500;">Close rate<br><span style="font-size:11px;color:var(--muted);font-weight:400;">ventas ÷ showed</span></td>
               <td style="padding:12px 16px;color:var(--muted);font-size:12px;">De los que aparecieron a la llamada, cuántos compraron</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">≥ 45%</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">—</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&lt; 35%</td>
             </tr>
             <tr style="border-bottom:1px solid var(--border);">
               <td style="padding:12px 16px;font-weight:500;">Refunds<br><span style="font-size:11px;color:var(--muted);font-weight:400;">por fecha de venta</span></td>
-              <td style="padding:12px 16px;color:var(--muted);font-size:12px;">Ventas que se reembolsaron ese mes. Las ventas netas = ventas brutas − refunds</td>
-              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">0</td>
-              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&gt; 0</td>
+              <td style="padding:12px 16px;color:var(--muted);font-size:12px;">Promedio histórico: 1.4/mes. El ideal es 0, pero hasta 2 es normal. Máximo registrado: 5 (oct 2025)</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">≤ 2</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">—</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&gt; 3</td>
             </tr>
             <tr>
-              <td style="padding:12px 16px;font-weight:500;">Ventas netas/mes<br><span style="font-size:11px;color:var(--muted);font-weight:400;">el resultado final</span></td>
+              <td style="padding:12px 16px;font-weight:500;">Ventas netas<br><span style="font-size:11px;color:var(--muted);font-weight:400;">el resultado final</span></td>
               <td style="padding:12px 16px;color:var(--muted);font-size:12px;">Ventas reales después de descontar refunds. Este es el número que importa</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">17</td>
-              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&lt; 12</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">~4–5</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&lt; 12/mes</td>
             </tr>
           </tbody>
         </table>
