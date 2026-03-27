@@ -444,7 +444,7 @@ function updateKPIs(curKey) {
   if (cancelRate > 25)  alerts.push({color:'#f0a84a', text:`<strong>Cancelaciones altas:</strong> ${cancelRate}% están cancelando en ${label}.`});
   if (showRate < 65)    alerts.push({color:'#f05a4a', text:`<strong>Show rate crítico:</strong> Solo ${showRate}% aparecieron en ${label}.`});
   if (closeRate >= 45)  alerts.push({color:'#4af09a', text:`<strong>Close rate sólido:</strong> ${closeRate}% de los que mostraron cerraron en ${label}.`});
-  if ((cur.refunds||0) > 0) alerts.push({color:'#f05a4a', text:`<strong>Refunds en ${label}:</strong> ${cur.refunds} venta(s) reembolsada(s). Ventas netas: ${netSales}.`});
+  if ((cur.refunds||0) >= 3) alerts.push({color:'#f05a4a', text:`<strong>Refunds altos en ${label}:</strong> ${cur.refunds} ventas reembolsadas. Ventas netas: ${netSales}.`});
   document.getElementById('alerts-container').innerHTML = alerts.map(a =>
     `<div class="alert"><div class="alert-dot" style="background:${a.color}"></div><div class="alert-text">${a.text}</div></div>`
   ).join('');
