@@ -133,7 +133,7 @@
         <div class="kpi-meta">showed ÷ (showed + no-show)</div>
         <div class="target-bar-wrap">
           <div class="target-bar-bg"><div class="target-bar-fill" id="bar-show" style="width:0%;background:var(--warn)"></div></div>
-          <div class="target-label">Target: 75% | <span id="kpi-show-pct">—</span></div>
+          <div class="target-label">Target: 80% | <span id="kpi-show-pct">—</span></div>
         </div>
         <div class="kpi-badge" id="badge-show">—</div>
       </div>
@@ -141,7 +141,7 @@
         <div class="kpi-label">Cancelaciones</div>
         <div class="kpi-value" id="kpi-cancel">—</div>
         <div class="kpi-meta">% de bookeados que cancelan</div>
-        <div class="target-label" style="margin-top:8px;">Target: ≤ 15%</div>
+        <div class="target-label" style="margin-top:8px;">Target: ≤ 18%</div>
         <div class="kpi-badge" id="badge-cancel">—</div>
       </div>
       <div class="kpi-card" style="--card-accent: var(--accent2)">
@@ -253,16 +253,16 @@
             <tr style="border-bottom:1px solid var(--border);">
               <td style="padding:12px 16px;font-weight:500;">Show rate<br><span style="font-size:11px;color:var(--muted);font-weight:400;">showed ÷ (showed + no-show)</span></td>
               <td style="padding:12px 16px;color:var(--muted);font-size:12px;">De los que bookearon, cuántos realmente aparecieron a la llamada</td>
-              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">≥ 75%</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">≥ 80%</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">—</td>
-              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&lt; 65%</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&lt; 70%</td>
             </tr>
             <tr style="border-bottom:1px solid var(--border);">
               <td style="padding:12px 16px;font-weight:500;">Cancelaciones<br><span style="font-size:11px;color:var(--muted);font-weight:400;">% de bookeados que cancelan</span></td>
               <td style="padding:12px 16px;color:var(--muted);font-size:12px;">Personas que agendaron pero cancelaron antes de la llamada</td>
-              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">≤ 15%</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">≤ 18%</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">—</td>
-              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&gt; 25%</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&gt; 28%</td>
             </tr>
             <tr style="border-bottom:1px solid var(--border);">
               <td style="padding:12px 16px;font-weight:500;">Close rate<br><span style="font-size:11px;color:var(--muted);font-weight:400;">ventas ÷ showed</span></td>
@@ -302,8 +302,8 @@
 const SHEET_ID = '1ctM6K8hQfh73bi7f-MtXkqW3BaPxU73NZf8xPJQUEOc';
 const TARGET_BOOKED = 62;
 const TARGET_SALES  = 17;
-const TARGET_SHOW   = 75;
-const TARGET_CANCEL = 15;
+const TARGET_SHOW   = 80;
+const TARGET_CANCEL = 18;
 
 let apiKey = localStorage.getItem('gsheets_api_key') || '';
 let charts = {};
@@ -443,15 +443,15 @@ function updateKPIs(curKey) {
     el.className = 'kpi-badge ' + cls;
     el.textContent = text;
   };
-  setBadge('badge-show',   showRate,   TARGET_SHOW,   65, false);
-  setBadge('badge-cancel', cancelRate, TARGET_CANCEL, 25, true);
+  setBadge('badge-show',   showRate,   TARGET_SHOW,   70, false);
+  setBadge('badge-cancel', cancelRate, TARGET_CANCEL, 28, true);
   setBadge('badge-close',  closeRate,  45,            35, false);
 
   const label = monthLabel(curKey).toUpperCase();
   const alerts = [];
   if (cur.booked < 46)  alerts.push({color:'#f05a4a', text:`<strong>Volumen bajo:</strong> Solo ${cur.booked} bookeados en ${label}. Target es 62.`});
-  if (cancelRate > 25)  alerts.push({color:'#f0a84a', text:`<strong>Cancelaciones altas:</strong> ${cancelRate}% están cancelando en ${label}.`});
-  if (showRate < 65)    alerts.push({color:'#f05a4a', text:`<strong>Show rate crítico:</strong> Solo ${showRate}% aparecieron en ${label}.`});
+  if (cancelRate > 28)  alerts.push({color:'#f0a84a', text:`<strong>Cancelaciones altas:</strong> ${cancelRate}% están cancelando en ${label}.`});
+  if (showRate < 70)    alerts.push({color:'#f05a4a', text:`<strong>Show rate crítico:</strong> Solo ${showRate}% aparecieron en ${label}.`});
   if (closeRate >= 45)  alerts.push({color:'#4af09a', text:`<strong>Close rate sólido:</strong> ${closeRate}% de los que mostraron cerraron en ${label}.`});
   if ((cur.refunds||0) >= 3) alerts.push({color:'#f05a4a', text:`<strong>Refunds altos en ${label}:</strong> ${cur.refunds} ventas reembolsadas. Ventas netas: ${netSales}.`});
   document.getElementById('alerts-container').innerHTML = alerts.map(a =>
