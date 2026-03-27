@@ -4,7 +4,55 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard — Adquisición de Clientes</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js">
+function updateKPIs(monthly, curKey) {
+  const cur = monthly[curKey] || {booked:0,showed:0,noshow:0,cancelled:0,sales:0};
+  const showRate   = cur.showed + cur.noshow > 0 ? Math.round(cur.showed / (cur.showed + cur.noshow) * 100) : 0;
+  const cancelRate = cur.booked > 0 ? Math.round(cur.cancelled / cur.booked * 100) : 0;
+  const closeRate  = cur.showed > 0 ? Math.round(cur.sales / cur.showed * 100) : 0;
+
+  document.getElementById('kpi-booked').textContent = cur.booked;
+  document.getElementById('kpi-show').textContent   = showRate + '%';
+  document.getElementById('kpi-cancel').textContent = cancelRate + '%';
+  document.getElementById('kpi-sales').textContent  = cur.sales;
+
+  const bookedPct = Math.min(Math.round(cur.booked / TARGET_BOOKED * 100), 100);
+  const salesPct  = Math.min(Math.round(cur.sales  / TARGET_SALES  * 100), 100);
+  document.getElementById('bar-booked').style.width = bookedPct + '%';
+  document.getElementById('bar-sales').style.width  = salesPct + '%';
+  document.getElementById('kpi-booked-pct').textContent = bookedPct + '%';
+  document.getElementById('kpi-sales-pct').textContent  = salesPct + '%';
+
+  const setBadge = (id, val, good, warn, invert) => {
+    const el = document.getElementById(id);
+    let cls, text;
+    if (!invert) {
+      cls  = val >= good ? 'badge-green' : val >= warn ? 'badge-warn' : 'badge-red';
+      text = val >= good ? '✓ En target' : val >= warn ? '⚠ Cerca'   : '✗ Bajo target';
+    } else {
+      cls  = val <= good ? 'badge-green' : val <= warn ? 'badge-warn' : 'badge-red';
+      text = val <= good ? '✓ En target' : val <= warn ? '⚠ Cerca'   : '✗ Alto';
+    }
+    el.className = 'kpi-badge ' + cls;
+    el.textContent = text;
+  };
+  setBadge('badge-show',   showRate,   TARGET_SHOW,   65, false);
+  setBadge('badge-cancel', cancelRate, TARGET_CANCEL, 25, true);
+
+  const monthLabel = document.getElementById('month-selector');
+  const selectedLabel = monthLabel ? monthLabel.options[monthLabel.selectedIndex]?.text : '';
+
+  const alerts = [];
+  if (cur.booked < 30)   alerts.push({color:'#f05a4a', text:`<strong>Volumen bajo:</strong> Solo ${cur.booked} bookeados en ${selectedLabel}. Target es 38.`});
+  if (cancelRate > 25)   alerts.push({color:'#f0a84a', text:`<strong>Cancelaciones altas:</strong> ${cancelRate}% están cancelando en ${selectedLabel}. Revisar seguimiento pre-llamada.`});
+  if (showRate < 65)     alerts.push({color:'#f05a4a', text:`<strong>Show rate crítico:</strong> Solo ${showRate}% aparecieron a la llamada en ${selectedLabel}.`});
+  if (closeRate >= 45)   alerts.push({color:'#4af09a', text:`<strong>Close rate sólido:</strong> ${closeRate}% de los que mostraron cerraron en ${selectedLabel}.`});
+
+  document.getElementById('alerts-container').innerHTML = alerts.map(a =>
+    `<div class="alert"><div class="alert-dot" style="background:${a.color}"></div><div class="alert-text">${a.text}</div></div>`
+  ).join('');
+}
+</script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -108,6 +156,10 @@
     </div>
   </header>
   <main>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;">
+      <label style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Mes</label>
+      <select id="month-selector" onchange="onMonthChange()" style="background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-family:var(--mono);font-size:13px;outline:none;cursor:pointer;"></select>
+    </div>
     <div class="kpi-grid">
       <div class="kpi-card" style="--card-accent: var(--accent2)">
         <div class="kpi-label">Bookeados este mes</div>
@@ -256,59 +308,41 @@ function processData(rows) {
   renderDashboard(monthly);
 }
 
+let allMonthlyData = {};
+
+function onMonthChange() {
+  const sel = document.getElementById('month-selector').value;
+  updateKPIs(allMonthlyData, sel);
+}
+
 function renderDashboard(monthly) {
+  allMonthlyData = monthly;
   const keys = Object.keys(monthly).sort().filter(k => k >= '2024-12');
+
+  // Populate month selector
+  const sel = document.getElementById('month-selector');
+  const prevVal = sel.value;
+  sel.innerHTML = '';
+  [...keys].reverse().forEach(k => {
+    const opt = document.createElement('option');
+    opt.value = k;
+    opt.textContent = monthName(k).toUpperCase();
+    sel.appendChild(opt);
+  });
+  if (prevVal && keys.includes(prevVal)) sel.value = prevVal;
   const monthName = k => {
     const [y,mo] = k.split('-');
     const names = ['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
     return names[+mo] + ' ' + y.slice(2);
   };
 
+  // Default to most recent month
   const now = new Date();
-  const curKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const cur = monthly[curKey] || {booked:0,showed:0,noshow:0,cancelled:0,sales:0};
+  const defaultKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const selEl = document.getElementById('month-selector');
+  if (!selEl.value) selEl.value = keys.includes(defaultKey) ? defaultKey : keys[keys.length-1];
 
-  const showRate   = cur.showed + cur.noshow > 0 ? Math.round(cur.showed / (cur.showed + cur.noshow) * 100) : 0;
-  const cancelRate = cur.booked > 0 ? Math.round(cur.cancelled / cur.booked * 100) : 0;
-  const closeRate  = cur.showed > 0 ? Math.round(cur.sales / cur.showed * 100) : 0;
-
-  document.getElementById('kpi-booked').textContent = cur.booked;
-  document.getElementById('kpi-show').textContent   = showRate + '%';
-  document.getElementById('kpi-cancel').textContent = cancelRate + '%';
-  document.getElementById('kpi-sales').textContent  = cur.sales;
-
-  const bookedPct = Math.min(Math.round(cur.booked / TARGET_BOOKED * 100), 100);
-  const salesPct  = Math.min(Math.round(cur.sales  / TARGET_SALES  * 100), 100);
-  document.getElementById('bar-booked').style.width = bookedPct + '%';
-  document.getElementById('bar-sales').style.width  = salesPct + '%';
-  document.getElementById('kpi-booked-pct').textContent = bookedPct + '%';
-  document.getElementById('kpi-sales-pct').textContent  = salesPct + '%';
-
-  const setBadge = (id, val, good, warn, invert) => {
-    const el = document.getElementById(id);
-    let cls, text;
-    if (!invert) {
-      cls  = val >= good ? 'badge-green' : val >= warn ? 'badge-warn' : 'badge-red';
-      text = val >= good ? '✓ En target' : val >= warn ? '⚠ Cerca'   : '✗ Bajo target';
-    } else {
-      cls  = val <= good ? 'badge-green' : val <= warn ? 'badge-warn' : 'badge-red';
-      text = val <= good ? '✓ En target' : val <= warn ? '⚠ Cerca'   : '✗ Alto';
-    }
-    el.className = 'kpi-badge ' + cls;
-    el.textContent = text;
-  };
-  setBadge('badge-show',   showRate,   TARGET_SHOW,   65, false);
-  setBadge('badge-cancel', cancelRate, TARGET_CANCEL, 25, true);
-
-  const alerts = [];
-  if (cur.booked < 30)   alerts.push({color:'#f05a4a', text:`<strong>Volumen bajo:</strong> Solo ${cur.booked} bookeados este mes. Target es 38.`});
-  if (cancelRate > 25)   alerts.push({color:'#f0a84a', text:`<strong>Cancelaciones altas:</strong> ${cancelRate}% están cancelando. Revisar seguimiento pre-llamada.`});
-  if (showRate < 65)     alerts.push({color:'#f05a4a', text:`<strong>Show rate crítico:</strong> Solo ${showRate}% están apareciendo a la llamada.`});
-  if (closeRate >= 45)   alerts.push({color:'#4af09a', text:`<strong>Close rate sólido:</strong> ${closeRate}% de los que muestran están cerrando.`});
-
-  document.getElementById('alerts-container').innerHTML = alerts.map(a =>
-    `<div class="alert"><div class="alert-dot" style="background:${a.color}"></div><div class="alert-text">${a.text}</div></div>`
-  ).join('');
+  updateKPIs(monthly, selEl.value);
 
   const labels    = keys.map(monthName);
   const booked    = keys.map(k => monthly[k].booked);
@@ -383,6 +417,54 @@ function renderDashboard(monthly) {
   document.getElementById('last-updated').textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
   document.getElementById('loading').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
+}
+
+function updateKPIs(monthly, curKey) {
+  const cur = monthly[curKey] || {booked:0,showed:0,noshow:0,cancelled:0,sales:0};
+  const showRate   = cur.showed + cur.noshow > 0 ? Math.round(cur.showed / (cur.showed + cur.noshow) * 100) : 0;
+  const cancelRate = cur.booked > 0 ? Math.round(cur.cancelled / cur.booked * 100) : 0;
+  const closeRate  = cur.showed > 0 ? Math.round(cur.sales / cur.showed * 100) : 0;
+
+  document.getElementById('kpi-booked').textContent = cur.booked;
+  document.getElementById('kpi-show').textContent   = showRate + '%';
+  document.getElementById('kpi-cancel').textContent = cancelRate + '%';
+  document.getElementById('kpi-sales').textContent  = cur.sales;
+
+  const bookedPct = Math.min(Math.round(cur.booked / TARGET_BOOKED * 100), 100);
+  const salesPct  = Math.min(Math.round(cur.sales  / TARGET_SALES  * 100), 100);
+  document.getElementById('bar-booked').style.width = bookedPct + '%';
+  document.getElementById('bar-sales').style.width  = salesPct + '%';
+  document.getElementById('kpi-booked-pct').textContent = bookedPct + '%';
+  document.getElementById('kpi-sales-pct').textContent  = salesPct + '%';
+
+  const setBadge = (id, val, good, warn, invert) => {
+    const el = document.getElementById(id);
+    let cls, text;
+    if (!invert) {
+      cls  = val >= good ? 'badge-green' : val >= warn ? 'badge-warn' : 'badge-red';
+      text = val >= good ? '✓ En target' : val >= warn ? '⚠ Cerca'   : '✗ Bajo target';
+    } else {
+      cls  = val <= good ? 'badge-green' : val <= warn ? 'badge-warn' : 'badge-red';
+      text = val <= good ? '✓ En target' : val <= warn ? '⚠ Cerca'   : '✗ Alto';
+    }
+    el.className = 'kpi-badge ' + cls;
+    el.textContent = text;
+  };
+  setBadge('badge-show',   showRate,   TARGET_SHOW,   65, false);
+  setBadge('badge-cancel', cancelRate, TARGET_CANCEL, 25, true);
+
+  const monthLabel = document.getElementById('month-selector');
+  const selectedLabel = monthLabel ? monthLabel.options[monthLabel.selectedIndex]?.text : '';
+
+  const alerts = [];
+  if (cur.booked < 30)   alerts.push({color:'#f05a4a', text:`<strong>Volumen bajo:</strong> Solo ${cur.booked} bookeados en ${selectedLabel}. Target es 38.`});
+  if (cancelRate > 25)   alerts.push({color:'#f0a84a', text:`<strong>Cancelaciones altas:</strong> ${cancelRate}% están cancelando en ${selectedLabel}. Revisar seguimiento pre-llamada.`});
+  if (showRate < 65)     alerts.push({color:'#f05a4a', text:`<strong>Show rate crítico:</strong> Solo ${showRate}% aparecieron a la llamada en ${selectedLabel}.`});
+  if (closeRate >= 45)   alerts.push({color:'#4af09a', text:`<strong>Close rate sólido:</strong> ${closeRate}% de los que mostraron cerraron en ${selectedLabel}.`});
+
+  document.getElementById('alerts-container').innerHTML = alerts.map(a =>
+    `<div class="alert"><div class="alert-dot" style="background:${a.color}"></div><div class="alert-text">${a.text}</div></div>`
+  ).join('');
 }
 </script>
 </body>
