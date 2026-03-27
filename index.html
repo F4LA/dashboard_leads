@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard — Adquisición de Clientes</title>
+<title>Dashboard — Client Acquisition</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -87,37 +87,37 @@
 <div id="setup-screen">
   <div class="setup-card">
     <h1>Dashboard — Leads</h1>
-    <p>Ingresa tu API key de Google Cloud para conectar con el sheet. La key se guarda solo en tu navegador y nunca sale de tu computadora.</p>
+    <p>Enter your Google Cloud API key to connect to the sheet. The key is saved only in your browser and never leaves your device.</p>
     <input type="password" id="api-key-input" placeholder="AIza..." autocomplete="off" />
-    <button class="btn" onclick="connect()">Conectar</button>
-    <div id="setup-error">No se pudo conectar. Verifica que la API key sea correcta y que el sheet esté compartido como "cualquier persona con el link puede ver".</div>
+    <button class="btn" onclick="connect()">Connect</button>
+    <div id="setup-error">Could not connect. Make sure your API key is correct and the sheet is shared as "anyone with the link can view".</div>
   </div>
 </div>
 
 <div id="loading">
   <div class="spinner"></div>
-  <p>Cargando datos...</p>
+  <p>Loading data...</p>
 </div>
 
 <div id="dashboard">
   <header>
     <div class="header-left">
       <div class="logo-dot"></div>
-      <h1>Adquisición de Clientes</h1>
+      <h1>Client Acquisition</h1>
     </div>
     <div style="display:flex;align-items:center;gap:12px;">
       <span class="last-updated" id="last-updated"></span>
-      <button class="btn-refresh" onclick="loadData()">↻ Actualizar</button>
+      <button class="btn-refresh" onclick="loadData()">↻ Refresh</button>
     </div>
   </header>
   <main>
     <div class="month-bar">
-      <label>Mes</label>
+      <label>Month</label>
       <select id="month-selector" onchange="onMonthChange()"></select>
     </div>
     <div class="kpi-grid">
       <div class="kpi-card" style="--card-accent: var(--accent2)">
-        <div class="kpi-label">Bookeados</div>
+        <div class="kpi-label">Booked Calls</div>
         <div class="kpi-value" id="kpi-booked">—</div>
         <div class="target-bar-wrap">
           <div class="target-bar-bg"><div class="target-bar-fill" id="bar-booked" style="width:0%"></div></div>
@@ -138,9 +138,12 @@
         <div class="kpi-badge" id="badge-show">—</div>
       </div>
       <div class="kpi-card" style="--card-accent: var(--danger)">
-        <div class="kpi-label">Cancelaciones</div>
-        <div class="kpi-value" id="kpi-cancel">—</div>
-        <div class="kpi-meta">% de bookeados que cancelan</div>
+        <div class="kpi-label">Cancellations (Cancel Rate)</div>
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;">
+          <div class="kpi-value" id="kpi-cancel-abs" style="margin-bottom:0;">—</div>
+          <div style="font-size:16px;color:var(--muted);font-family:var(--mono);" id="kpi-cancel">(—)</div>
+        </div>
+        <div class="kpi-meta">cancellations ÷ booked</div>
         <div class="target-label" style="margin-top:8px;">Target: ≤ 18%</div>
         <div class="kpi-badge" id="badge-cancel">—</div>
       </div>
@@ -150,7 +153,7 @@
           <div class="kpi-value" id="kpi-close-abs" style="margin-bottom:0;">—</div>
           <div style="font-size:16px;color:var(--muted);font-family:var(--mono);" id="kpi-close">(—)</div>
         </div>
-        <div class="kpi-meta">ventas ÷ showed</div>
+        <div class="kpi-meta">sales ÷ showed</div>
         <div class="target-bar-wrap">
           <div class="target-bar-bg"><div class="target-bar-fill" id="bar-close" style="width:0%;background:var(--accent2)"></div></div>
           <div class="target-label">Target: 45% | <span id="kpi-close-pct">—</span></div>
@@ -160,11 +163,11 @@
       <div class="kpi-card" style="--card-accent: #f05a4a">
         <div class="kpi-label">Refunds</div>
         <div class="kpi-value" id="kpi-refunds" style="color:var(--danger)">—</div>
-        <div class="kpi-meta">ventas reembolsadas</div>
-        <div class="target-label" style="margin-top:8px;">Target: ≤ 2 | promedio histórico: 1.4</div>
+        <div class="kpi-meta">refunded sales</div>
+        <div class="target-label" style="margin-top:8px;">Target: ≤ 2 | historical avg: 1.4</div>
       </div>
       <div class="kpi-card" style="--card-accent: var(--green)">
-        <div class="kpi-label">Ventas netas</div>
+        <div class="kpi-label">Net Sales</div>
         <div class="kpi-value" id="kpi-net-sales" style="color:var(--green)">—</div>
         <div class="target-bar-wrap">
           <div class="target-bar-bg"><div class="target-bar-fill" id="bar-net-sales" style="width:0%"></div></div>
@@ -175,43 +178,43 @@
     <div class="alerts" id="alerts-container"></div>
     <div class="charts-grid">
       <div class="chart-card full">
-        <div class="chart-title">Bookeados por mes</div>
+        <div class="chart-title">Booked Calls por mes</div>
         <div class="legend">
-          <div class="legend-item"><div class="legend-dot" style="background:#4a8ff0"></div>Bookearon</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#4a8ff0"></div>Booked</div>
           <div class="legend-item"><div class="legend-dot" style="background:#c8f04a"></div>Showed</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#4af09a"></div>Ventas</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#4af09a"></div>Sales</div>
         </div>
         <div class="chart-wrap" style="height:220px"><canvas id="cVolumen"></canvas></div>
       </div>
       <div class="chart-card">
-        <div class="chart-title">Embudo — mes seleccionado</div>
+        <div class="chart-title">Funnel — selected month</div>
         <div id="funnel-container"></div>
       </div>
       <div class="chart-card">
-        <div class="chart-title">No-show % por mes</div>
+        <div class="chart-title">No-show % per month</div>
         <div class="chart-wrap" style="height:180px"><canvas id="cNoshow"></canvas></div>
       </div>
       <div class="chart-card">
-        <div class="chart-title">Cancelaciones por mes</div>
+        <div class="chart-title">Cancellations per month</div>
         <div class="chart-wrap" style="height:180px"><canvas id="cCancel"></canvas></div>
       </div>
       <div class="chart-card">
-        <div class="chart-title">Close rate % por mes</div>
+        <div class="chart-title">Close rate % per month</div>
         <div class="chart-wrap" style="height:180px"><canvas id="cClose"></canvas></div>
       </div>
     </div>
 
-    <!-- Guía de referencia -->
+    <!-- Reference guide -->
     <div style="margin-top:2.5rem;padding-top:2rem;border-top:1px solid var(--border);">
-      <div style="font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1.5rem;">Guía de referencia</div>
+      <div style="font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1.5rem;">Reference guide</div>
 
       <!-- Embudo objetivo -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:16px;">
-        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1.25rem;">Para cerrar 17 ventas/mes</div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1.25rem;">To close 17 sales/month</div>
         <div style="display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;">
           <div style="text-align:center;">
             <div style="font-size:36px;font-weight:300;font-family:var(--mono);color:#4a8ff0;">62</div>
-            <div style="font-size:12px;color:var(--muted);">bookeados/mes</div>
+            <div style="font-size:12px;color:var(--muted);">booked/month</div>
           </div>
           <div style="font-size:20px;color:var(--border);">→</div>
           <div style="text-align:center;">
@@ -221,66 +224,66 @@
           <div style="font-size:20px;color:var(--border);">→</div>
           <div style="text-align:center;">
             <div style="font-size:36px;font-weight:300;font-family:var(--mono);color:var(--green);">17</div>
-            <div style="font-size:12px;color:var(--muted);">ventas (45% close)</div>
+            <div style="font-size:12px;color:var(--muted);">sales (45% close)</div>
           </div>
         </div>
-        <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:12px;">Si reduces cancelaciones y no-shows, necesitas aún menos bookeados</div>
+        <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:12px;">If you reduce cancellations and no-shows, you need even fewer booked calls</div>
       </div>
 
       <!-- Tabla de métricas -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
         <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);">
-          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Métricas a monitorear — semana a semana</div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Metrics to monitor — week by week</div>
         </div>
         <table style="width:100%;border-collapse:collapse;font-size:13px;">
           <thead>
             <tr style="border-bottom:1px solid var(--border);">
-              <th style="text-align:left;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Métrica</th>
-              <th style="text-align:left;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Qué mide</th>
-              <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Target mes</th>
-              <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Target semana</th>
-              <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Alerta si...</th>
+              <th style="text-align:left;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Metric</th>
+              <th style="text-align:left;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">What it measures</th>
+              <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Monthly target</th>
+              <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Weekly target</th>
+              <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Alert if...</th>
             </tr>
           </thead>
           <tbody>
             <tr style="border-bottom:1px solid var(--border);">
-              <td style="padding:12px 16px;font-weight:500;">Bookeados<br><span style="font-size:11px;color:var(--muted);font-weight:400;">el más importante</span></td>
-              <td style="padding:12px 16px;color:var(--muted);font-size:12px;">Personas que agendaron una llamada de ventas</td>
+              <td style="padding:12px 16px;font-weight:500;">Booked Calls<br><span style="font-size:11px;color:var(--muted);font-weight:400;">most important</span></td>
+              <td style="padding:12px 16px;color:var(--muted);font-size:12px;">People who scheduled a sales call</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">≥ 62</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">~16</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&lt; 46/mes</td>
             </tr>
             <tr style="border-bottom:1px solid var(--border);">
               <td style="padding:12px 16px;font-weight:500;">Show rate<br><span style="font-size:11px;color:var(--muted);font-weight:400;">showed ÷ (showed + no-show)</span></td>
-              <td style="padding:12px 16px;color:var(--muted);font-size:12px;">De los que bookearon, cuántos realmente aparecieron a la llamada</td>
+              <td style="padding:12px 16px;color:var(--muted);font-size:12px;">Of those who booked, how many actually showed up to the call</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">≥ 80%</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">—</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&lt; 70%</td>
             </tr>
             <tr style="border-bottom:1px solid var(--border);">
               <td style="padding:12px 16px;font-weight:500;">Cancelaciones<br><span style="font-size:11px;color:var(--muted);font-weight:400;">% de bookeados que cancelan</span></td>
-              <td style="padding:12px 16px;color:var(--muted);font-size:12px;">Personas que agendaron pero cancelaron antes de la llamada</td>
+              <td style="padding:12px 16px;color:var(--muted);font-size:12px;">People who booked but cancelled before the call</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">≤ 18%</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">—</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&gt; 28%</td>
             </tr>
             <tr style="border-bottom:1px solid var(--border);">
-              <td style="padding:12px 16px;font-weight:500;">Close rate<br><span style="font-size:11px;color:var(--muted);font-weight:400;">ventas ÷ showed</span></td>
-              <td style="padding:12px 16px;color:var(--muted);font-size:12px;">De los que aparecieron a la llamada, cuántos compraron</td>
+              <td style="padding:12px 16px;font-weight:500;">Close rate<br><span style="font-size:11px;color:var(--muted);font-weight:400;">sales ÷ showed</span></td>
+              <td style="padding:12px 16px;color:var(--muted);font-size:12px;">Of those who showed up, how many purchased</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">≥ 45%</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">—</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&lt; 35%</td>
             </tr>
             <tr style="border-bottom:1px solid var(--border);">
               <td style="padding:12px 16px;font-weight:500;">Refunds<br><span style="font-size:11px;color:var(--muted);font-weight:400;">por fecha de venta</span></td>
-              <td style="padding:12px 16px;color:var(--muted);font-size:12px;">Promedio histórico: 1.4/mes. El ideal es 0, pero hasta 2 es normal. Máximo registrado: 5 (oct 2025)</td>
+              <td style="padding:12px 16px;color:var(--muted);font-size:12px;">Historical avg: 1.4/month. Ideal is 0, but up to 2 is normal. Highest recorded: 5 (Oct 2025)</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">≤ 2</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">—</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&gt; 3</td>
             </tr>
             <tr>
-              <td style="padding:12px 16px;font-weight:500;">Ventas netas<br><span style="font-size:11px;color:var(--muted);font-weight:400;">el resultado final</span></td>
-              <td style="padding:12px 16px;color:var(--muted);font-size:12px;">Ventas reales después de descontar refunds. Este es el número que importa</td>
+              <td style="padding:12px 16px;font-weight:500;">Net Sales<br><span style="font-size:11px;color:var(--muted);font-weight:400;">the final result</span></td>
+              <td style="padding:12px 16px;color:var(--muted);font-size:12px;">Sales reales después de descontar refunds. Este es el número que importa</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">17</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">~4–5</td>
               <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&lt; 12/mes</td>
@@ -289,7 +292,7 @@
         </table>
         <div style="padding:1rem 1.25rem;border-top:1px solid var(--border);background:rgba(200,240,74,0.04);">
           <div style="font-size:12px;color:var(--muted);line-height:1.6;">
-            💡 <strong style="color:var(--text);">Palanca rápida:</strong> si reduces las cancelaciones del 18% → 10%, necesitas ~55 bookeados en vez de 62 para llegar a 17 ventas. Las cancelaciones son tu mayor oportunidad inmediata.
+            💡 <strong style="color:var(--text);">Quick win:</strong> if you reduce cancellations from 18% → 10%, you need ~55 booked calls instead of 62 to hit 17 sales. Cancellations are your biggest immediate opportunity.
           </div>
         </div>
       </div>
@@ -298,38 +301,38 @@
 
     <!-- Knowledge Base -->
     <div style="margin-top:2.5rem;padding-top:2rem;border-top:1px solid var(--border);">
-      <div style="font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1.5rem;">Knowledge base — de dónde viene cada número</div>
+      <div style="font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1.5rem;">Knowledge base — where each number comes from</div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
 
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
-          <div style="font-size:13px;font-weight:500;color:var(--accent2);margin-bottom:8px;">Bookeados — target ≥ 62/mes</div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Cuenta todas las personas que agendaron una llamada de ventas ese mes. En el proceso actual, bookear y aplicar es el mismo paso — si alguien aplica, ya tiene call agendada.<br><br><strong style="color:var(--text);">Por qué 62:</strong> para cerrar 17 ventas necesitas 38 showed. Como históricamente solo el 62% de los bookeados termina mostrando (el resto cancela o no aparece), necesitas 62 bookeados para llegar a 38 showed.</div>
+          <div style="font-size:13px;font-weight:500;color:var(--accent2);margin-bottom:8px;">Booked Calls — target ≥ 62/mes</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Counts all people who scheduled a sales call that month. In the current process, booking and applying happen at the same time — if someone applies, they already have a call scheduled.<br><br><strong style="color:var(--text);">Why 62:</strong> to close 17 sales you need 38 showed. Historically only 62% of booked calls actually show up (the rest cancel or no-show), so you need 62 booked to get 38 showed.</div>
         </div>
 
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
           <div style="font-size:13px;font-weight:500;color:var(--warn);margin-bottom:8px;">Calls Showed (Show Rate) — target ≥ 80%</div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Muestra cuántas personas de las que bookearon aparecieron a la llamada. Se calcula como:<br><br><strong style="color:var(--text);">showed ÷ (showed + no-show)</strong><br><br>Las cancelaciones no se incluyen porque son diferentes — el que cancela avisó y puede reagendarse, el no-show simplemente no apareció.<br><br><strong style="color:var(--text);">Por qué 80%:</strong> es el promedio real de los últimos 14 meses de data.</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Shows how many people who booked actually showed up to the call. Calculated as:<br><br><strong style="color:var(--text);">showed ÷ (showed + no-show)</strong><br><br>Cancellations are not included because they are different — the person who cancels gave notice and can reschedule, the no-show simply didn't appear.<br><br><strong style="color:var(--text);">Why 80%:</strong> it's the real average from the last 14 months of data.</div>
         </div>
 
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
-          <div style="font-size:13px;font-weight:500;color:var(--danger);margin-bottom:8px;">Cancelaciones — target ≤ 18%</div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Porcentaje de personas que agendaron pero cancelaron antes de la llamada. Se calcula como:<br><br><strong style="color:var(--text);">cancelaciones ÷ bookeados totales</strong><br><br>Una cancelación no es necesariamente una pérdida — hay oportunidad de reagendar. Pero si el % es alto indica que la gente no estaba suficientemente comprometida al momento de agendar, o que faltó seguimiento.<br><br><strong style="color:var(--text);">Por qué 18%:</strong> promedio histórico real de los últimos 14 meses.</div>
+          <div style="font-size:13px;font-weight:500;color:var(--danger);margin-bottom:8px;">Cancellations — target ≤ 18%</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Percentage of people who booked but cancelled before the call. Calculated as:<br><br><strong style="color:var(--text);">cancellations ÷ total booked</strong><br><br>A cancellation is not necessarily a loss — there's an opportunity to reschedule. But if the % is high it means people weren't committed enough when booking, or follow-up was lacking.<br><br><strong style="color:var(--text);">Why 18%:</strong> real historical average from the last 14 months.</div>
         </div>
 
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
           <div style="font-size:13px;font-weight:500;color:var(--accent2);margin-bottom:8px;">Sales (Close Rate) — target ≥ 45%</div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Muestra cuántas personas de las que aparecieron a la llamada terminaron comprando. Se calcula como:<br><br><strong style="color:var(--text);">ventas brutas ÷ showed</strong><br><br>Este número mide la efectividad del equipo de ventas en la llamada. Si el % es bajo, el problema no está en el volumen ni en el seguimiento — está en la llamada misma.<br><br><strong style="color:var(--text);">Por qué 45%:</strong> promedio histórico real de los últimos 14 meses.</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Shows how many people who showed up to the call ended up purchasing. Calculated as:<br><br><strong style="color:var(--text);">gross sales ÷ showed</strong><br><br>This number measures sales team effectiveness on the call. If the % is low, the problem is not volume or follow-up — it's the call itself.<br><br><strong style="color:var(--text);">Why 45%:</strong> real historical average from the last 14 months.</div>
         </div>
 
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
-          <div style="font-size:13px;font-weight:500;color:var(--danger);margin-bottom:8px;">Refunds — target ≤ 2/mes</div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Cuenta las ventas que fueron reembolsadas, usando la <strong style="color:var(--text);">fecha de venta</strong> (no la fecha del reembolso) para que todo quede dentro del mismo mes.<br><br>El promedio histórico es <strong style="color:var(--text);">1.4 refunds/mes</strong>. Tener 1 o 2 es normal. La alerta se activa con 3 o más — eso indica un patrón que vale la pena revisar.<br><br>El peor mes registrado fue octubre 2025 con 5 refunds.</div>
+          <div style="font-size:13px;font-weight:500;color:var(--danger);margin-bottom:8px;">Refunds — target ≤ 2/month</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Counts sales that were refunded, using the <strong style="color:var(--text);">sale date</strong> (not the refund date) so everything stays within the same month.<br><br>The historical average is <strong style="color:var(--text);">1.4 refunds/month</strong>. Having 1 or 2 is normal. The alert triggers at 3 or more — that indicates a pattern worth reviewing.<br><br>The worst month recorded was October 2025 with 5 refunds.</div>
         </div>
 
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
-          <div style="font-size:13px;font-weight:500;color:var(--green);margin-bottom:8px;">Ventas netas — target 17/mes</div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Es el número final que importa. Se calcula como:<br><br><strong style="color:var(--text);">ventas brutas − refunds</strong><br><br>Las ventas brutas incluyen todos los que compraron ese mes, aunque después hayan pedido reembolso. Las ventas netas es lo que realmente se cobró.<br><br><strong style="color:var(--text);">Por qué 17:</strong> es el objetivo mensual definido por el equipo. Para llegar ahí necesitas el embudo completo funcionando: 62 bookeados → 38 showed → 17 ventas.</div>
+          <div style="font-size:13px;font-weight:500;color:var(--green);margin-bottom:8px;">Net Sales — target 17/mes</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">This is the final number that matters. Calculated as:<br><br><strong style="color:var(--text);">gross sales − refunds</strong><br><br>Gross sales include everyone who purchased that month, even if they later requested a refund. Net sales is what was actually collected.<br><br><strong style="color:var(--text);">Why 17:</strong> it's the monthly goal set by the team. To get there you need the full funnel working: 62 booked → 38 showed → 17 sales.</div>
         </div>
 
       </div>
@@ -450,7 +453,8 @@ function updateKPIs(curKey) {
   document.getElementById('kpi-booked').textContent    = cur.booked;
   document.getElementById('kpi-show').textContent      = '(' + showRate + '%)';
   document.getElementById('kpi-show-abs').textContent  = cur.showed;
-  document.getElementById('kpi-cancel').textContent    = cancelRate + '%';
+  document.getElementById('kpi-cancel').textContent      = '(' + cancelRate + '%)';
+  document.getElementById('kpi-cancel-abs').textContent  = cur.cancelled;
   document.getElementById('kpi-close').textContent     = '(' + closeRate + '%)';
   document.getElementById('kpi-close-abs').textContent = cur.sales;
   document.getElementById('kpi-refunds').textContent   = cur.refunds || 0;
@@ -474,10 +478,10 @@ function updateKPIs(curKey) {
     let cls, text;
     if (!invert) {
       cls  = val >= good ? 'badge-green' : val >= warn ? 'badge-warn' : 'badge-red';
-      text = val >= good ? '✓ En target' : val >= warn ? '⚠ Cerca' : '✗ Bajo target';
+      text = val >= good ? '✓ On target' : val >= warn ? '⚠ Close' : '✗ Below target';
     } else {
       cls  = val <= good ? 'badge-green' : val <= warn ? 'badge-warn' : 'badge-red';
-      text = val <= good ? '✓ En target' : val <= warn ? '⚠ Cerca' : '✗ Alto';
+      text = val <= good ? '✓ On target' : val <= warn ? '⚠ Close' : '✗ High';
     }
     el.className = 'kpi-badge ' + cls;
     el.textContent = text;
@@ -492,7 +496,7 @@ function updateKPIs(curKey) {
   if (cancelRate > 28)  alerts.push({color:'#f0a84a', text:`<strong>Cancelaciones altas:</strong> ${cancelRate}% están cancelando en ${label}.`});
   if (showRate < 70)    alerts.push({color:'#f05a4a', text:`<strong>Show rate crítico:</strong> Solo ${showRate}% aparecieron en ${label}.`});
   if (closeRate >= 45)  alerts.push({color:'#4af09a', text:`<strong>Close rate sólido:</strong> ${closeRate}% de los que mostraron cerraron en ${label}.`});
-  if ((cur.refunds||0) >= 3) alerts.push({color:'#f05a4a', text:`<strong>Refunds altos en ${label}:</strong> ${cur.refunds} ventas reembolsadas. Ventas netas: ${netSales}.`});
+  if ((cur.refunds||0) >= 3) alerts.push({color:'#f05a4a', text:`<strong>Refunds altos en ${label}:</strong> ${cur.refunds} refunded sales. Net Sales: ${netSales}.`});
   document.getElementById('alerts-container').innerHTML = alerts.map(a =>
     `<div class="alert"><div class="alert-dot" style="background:${a.color}"></div><div class="alert-text">${a.text}</div></div>`
   ).join('');
@@ -501,16 +505,16 @@ function updateKPIs(curKey) {
 function updateFunnel(key) {
   const m = globalMonthly[key] || {booked:0,showed:0,noshow:0,cancelled:0,sales:0};
   const steps = [
-    {label:'Bookearon', val:m.booked, color:'#4a8ff0', pct:null},
+    {label:'Booked', val:m.booked, color:'#4a8ff0', pct:null},
     {label:'Showed',    val:m.showed, color:'#c8f04a', pct:m.booked ? Math.round(m.showed/m.booked*100)+'%':'—'},
-    {label:'Ventas',    val:m.sales,  color:'#4af09a', pct:m.showed ? Math.round(m.sales/m.showed*100)+'%':'—'},
+    {label:'Sales',    val:m.sales,  color:'#4af09a', pct:m.showed ? Math.round(m.sales/m.showed*100)+'%':'—'},
   ];
   const showRateFunnel  = m.showed + m.noshow > 0 ? Math.round(m.showed / (m.showed + m.noshow) * 100) : 0;
   const closeRateFunnel = m.showed > 0 ? Math.round(m.sales / m.showed * 100) : 0;
   const funnelSteps = [
-    {label:'Bookearon', val:m.booked, color:'#4a8ff0', right: `<span style="font-size:14px;font-weight:500;color:var(--text);">${m.booked}</span>`},
+    {label:'Booked', val:m.booked, color:'#4a8ff0', right: `<span style="font-size:14px;font-weight:500;color:var(--text);">${m.booked}</span>`},
     {label:'Showed',    val:m.showed, color:'#c8f04a', right: `<span style="font-size:14px;font-weight:500;color:var(--text);">${m.showed}</span>&nbsp;<span style="font-size:11px;color:#7a7a85;">(${showRateFunnel}%)</span>`},
-    {label:'Ventas',    val:m.sales,  color:'#4af09a', right: `<span style="font-size:14px;font-weight:500;color:var(--text);">${m.sales}</span>&nbsp;<span style="font-size:11px;color:#7a7a85;">(${closeRateFunnel}%)</span>`},
+    {label:'Sales',    val:m.sales,  color:'#4af09a', right: `<span style="font-size:14px;font-weight:500;color:var(--text);">${m.sales}</span>&nbsp;<span style="font-size:11px;color:#7a7a85;">(${closeRateFunnel}%)</span>`},
   ];
   document.getElementById('funnel-container').innerHTML =
     `<div style="margin-bottom:0.5rem;font-size:11px;color:#7a7a85;text-transform:uppercase;letter-spacing:0.06em;">${monthLabel(key)}</div>` +
@@ -559,9 +563,9 @@ function renderDashboard(monthly) {
   charts.vol = new Chart(document.getElementById('cVolumen'), {
     type: 'bar',
     data: { labels, datasets: [
-      {label:'Bookearon', data:booked, backgroundColor:'#4a8ff0', borderRadius:3},
+      {label:'Booked', data:booked, backgroundColor:'#4a8ff0', borderRadius:3},
       {label:'Showed',    data:showed, backgroundColor:'#c8f04a', borderRadius:3},
-      {label:'Ventas',    data:sales,  backgroundColor:'#4af09a', borderRadius:3}
+      {label:'Sales',    data:sales,  backgroundColor:'#4af09a', borderRadius:3}
     ]},
     options: {responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
       scales:{x:{ticks:tickOpts, grid:gridOpts}, y:{ticks:{...tickOpts, autoSkip:true}, grid:gridOpts, beginAtZero:true}}}
@@ -594,7 +598,7 @@ function renderDashboard(monthly) {
       scales:{x:{ticks:tickOpts, grid:gridOpts}, y:{ticks:{...tickOpts, autoSkip:true, callback:v=>v+'%'}, grid:gridOpts, beginAtZero:true}}}
   });
 
-  document.getElementById('last-updated').textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
+  document.getElementById('last-updated').textContent = 'Updated: ' + new Date().toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
   document.getElementById('loading').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
 }
