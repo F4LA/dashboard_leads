@@ -126,8 +126,11 @@
       </div>
       <div class="kpi-card" style="--card-accent: var(--warn)">
         <div class="kpi-label">Show rate</div>
-        <div class="kpi-value" id="kpi-show">—</div>
-        <div class="kpi-meta" id="kpi-show-abs" style="font-size:12px;margin-bottom:4px;">— showed</div>
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;">
+          <div class="kpi-value" id="kpi-show-abs" style="margin-bottom:0;">—</div>
+          <div style="font-size:16px;color:var(--muted);font-family:var(--mono);" id="kpi-show">(—)</div>
+        </div>
+        <div class="kpi-meta">showed ÷ (showed + no-show)</div>
         <div class="target-bar-wrap">
           <div class="target-bar-bg"><div class="target-bar-fill" id="bar-show" style="width:0%;background:var(--warn)"></div></div>
           <div class="target-label">Target: 75% | <span id="kpi-show-pct">—</span></div>
@@ -143,8 +146,11 @@
       </div>
       <div class="kpi-card" style="--card-accent: var(--accent2)">
         <div class="kpi-label">Close rate</div>
-        <div class="kpi-value" id="kpi-close">—</div>
-        <div class="kpi-meta" id="kpi-close-abs" style="font-size:12px;margin-bottom:4px;">— ventas de — showed</div>
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;">
+          <div class="kpi-value" id="kpi-close-abs" style="margin-bottom:0;">—</div>
+          <div style="font-size:16px;color:var(--muted);font-family:var(--mono);" id="kpi-close">(—)</div>
+        </div>
+        <div class="kpi-meta">ventas ÷ showed</div>
         <div class="target-bar-wrap">
           <div class="target-bar-bg"><div class="target-bar-fill" id="bar-close" style="width:0%;background:var(--accent2)"></div></div>
           <div class="target-label">Target: 45% | <span id="kpi-close-pct">—</span></div>
@@ -441,11 +447,11 @@ function updateKPIs(curKey) {
   const netSales = cur.sales - (cur.refunds || 0);
 
   document.getElementById('kpi-booked').textContent    = cur.booked;
-  document.getElementById('kpi-show').textContent      = showRate + '%';
-  document.getElementById('kpi-show-abs').textContent  = cur.showed + ' showed';
+  document.getElementById('kpi-show').textContent      = '(' + showRate + '%)';
+  document.getElementById('kpi-show-abs').textContent  = cur.showed;
   document.getElementById('kpi-cancel').textContent    = cancelRate + '%';
-  document.getElementById('kpi-close').textContent     = closeRate + '%';
-  document.getElementById('kpi-close-abs').textContent = cur.sales + ' ventas de ' + cur.showed + ' showed';
+  document.getElementById('kpi-close').textContent     = '(' + closeRate + '%)';
+  document.getElementById('kpi-close-abs').textContent = cur.sales;
   document.getElementById('kpi-refunds').textContent   = cur.refunds || 0;
   document.getElementById('kpi-net-sales').textContent = netSales;
 
