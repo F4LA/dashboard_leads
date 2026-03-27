@@ -121,7 +121,7 @@
         <div class="kpi-value" id="kpi-booked">—</div>
         <div class="target-bar-wrap">
           <div class="target-bar-bg"><div class="target-bar-fill" id="bar-booked" style="width:0%"></div></div>
-          <div class="target-label">Target: 38 | <span id="kpi-booked-pct">—</span></div>
+          <div class="target-label">Target: 62 | <span id="kpi-booked-pct">—</span></div>
         </div>
       </div>
       <div class="kpi-card" style="--card-accent: var(--warn)">
@@ -204,13 +204,13 @@
         <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1.25rem;">Para cerrar 17 ventas/mes</div>
         <div style="display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;">
           <div style="text-align:center;">
-            <div style="font-size:36px;font-weight:300;font-family:var(--mono);color:#4a8ff0;">38</div>
+            <div style="font-size:36px;font-weight:300;font-family:var(--mono);color:#4a8ff0;">62</div>
             <div style="font-size:12px;color:var(--muted);">bookeados/mes</div>
           </div>
           <div style="font-size:20px;color:var(--border);">→</div>
           <div style="text-align:center;">
-            <div style="font-size:36px;font-weight:300;font-family:var(--mono);color:var(--warn);">26</div>
-            <div style="font-size:12px;color:var(--muted);">showed (68%)</div>
+            <div style="font-size:36px;font-weight:300;font-family:var(--mono);color:var(--warn);">38</div>
+            <div style="font-size:12px;color:var(--muted);">showed (62%)</div>
           </div>
           <div style="font-size:20px;color:var(--border);">→</div>
           <div style="text-align:center;">
@@ -240,9 +240,9 @@
             <tr style="border-bottom:1px solid var(--border);">
               <td style="padding:12px 16px;font-weight:500;">Bookeados<br><span style="font-size:11px;color:var(--muted);font-weight:400;">el más importante</span></td>
               <td style="padding:12px 16px;color:var(--muted);font-size:12px;">Personas que agendaron una llamada de ventas</td>
-              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">≥ 38</td>
-              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">~10</td>
-              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&lt; 30/mes</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">≥ 62</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">~16</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&lt; 46/mes</td>
             </tr>
             <tr style="border-bottom:1px solid var(--border);">
               <td style="padding:12px 16px;font-weight:500;">Show rate<br><span style="font-size:11px;color:var(--muted);font-weight:400;">showed ÷ (showed + no-show)</span></td>
@@ -283,7 +283,7 @@
         </table>
         <div style="padding:1rem 1.25rem;border-top:1px solid var(--border);background:rgba(200,240,74,0.04);">
           <div style="font-size:12px;color:var(--muted);line-height:1.6;">
-            💡 <strong style="color:var(--text);">Palanca rápida:</strong> si subes el show rate de 68% → 80% sin tocar el volumen, pasas de ~17 a ~19 ventas/mes. Las cancelaciones son tu mayor oportunidad inmediata.
+            💡 <strong style="color:var(--text);">Palanca rápida:</strong> si reduces las cancelaciones del 18% → 10%, necesitas ~55 bookeados en vez de 62 para llegar a 17 ventas. Las cancelaciones son tu mayor oportunidad inmediata.
           </div>
         </div>
       </div>
@@ -332,7 +332,7 @@
 
 <script>
 const SHEET_ID = '1ctM6K8hQfh73bi7f-MtXkqW3BaPxU73NZf8xPJQUEOc';
-const TARGET_BOOKED = 38;
+const TARGET_BOOKED = 62;
 const TARGET_SALES  = 17;
 const TARGET_SHOW   = 75;
 const TARGET_CANCEL = 15;
@@ -479,7 +479,7 @@ function updateKPIs(curKey) {
 
   const label = monthLabel(curKey).toUpperCase();
   const alerts = [];
-  if (cur.booked < 30)  alerts.push({color:'#f05a4a', text:`<strong>Volumen bajo:</strong> Solo ${cur.booked} bookeados en ${label}. Target es 38.`});
+  if (cur.booked < 46)  alerts.push({color:'#f05a4a', text:`<strong>Volumen bajo:</strong> Solo ${cur.booked} bookeados en ${label}. Target es 38.`});
   if (cancelRate > 25)  alerts.push({color:'#f0a84a', text:`<strong>Cancelaciones altas:</strong> ${cancelRate}% están cancelando en ${label}.`});
   if (showRate < 65)    alerts.push({color:'#f05a4a', text:`<strong>Show rate crítico:</strong> Solo ${showRate}% aparecieron en ${label}.`});
   if (closeRate >= 45)  alerts.push({color:'#4af09a', text:`<strong>Close rate sólido:</strong> ${closeRate}% de los que mostraron cerraron en ${label}.`});
@@ -496,19 +496,19 @@ function updateFunnel(key) {
     {label:'Showed',    val:m.showed, color:'#c8f04a', pct:m.booked ? Math.round(m.showed/m.booked*100)+'%':'—'},
     {label:'Ventas',    val:m.sales,  color:'#4af09a', pct:m.showed ? Math.round(m.sales/m.showed*100)+'%':'—'},
   ];
-  const showRateFunnel   = m.showed + m.noshow > 0 ? Math.round(m.showed / (m.showed + m.noshow) * 100) : 0;
-  const closeRateFunnel  = m.showed > 0 ? Math.round(m.sales / m.showed * 100) : 0;
+  const showRateFunnel  = m.showed + m.noshow > 0 ? Math.round(m.showed / (m.showed + m.noshow) * 100) : 0;
+  const closeRateFunnel = m.showed > 0 ? Math.round(m.sales / m.showed * 100) : 0;
   const funnelSteps = [
-    {label:'Bookearon', val:m.booked, color:'#4a8ff0', pct:null},
-    {label:'Showed',    val:m.showed, color:'#c8f04a', pct:showRateFunnel + '%'},
-    {label:'Ventas',    val:m.sales,  color:'#4af09a', pct:closeRateFunnel + '%'},
+    {label:'Bookearon', val:m.booked, color:'#4a8ff0', right: `<span style="font-size:14px;font-weight:500;color:var(--text);">${m.booked}</span>`},
+    {label:'Showed',    val:m.showed, color:'#c8f04a', right: `<span style="font-size:14px;font-weight:500;color:var(--text);">${m.showed}</span>&nbsp;<span style="font-size:11px;color:#7a7a85;">(${showRateFunnel}%)</span>`},
+    {label:'Ventas',    val:m.sales,  color:'#4af09a', right: `<span style="font-size:14px;font-weight:500;color:var(--text);">${m.sales}</span>&nbsp;<span style="font-size:11px;color:#7a7a85;">(${closeRateFunnel}%)</span>`},
   ];
   document.getElementById('funnel-container').innerHTML =
     `<div style="margin-bottom:0.5rem;font-size:11px;color:#7a7a85;text-transform:uppercase;letter-spacing:0.06em;">${monthLabel(key)}</div>` +
     funnelSteps.map(s => `<div class="funnel-row">
       <div class="funnel-label">${s.label}</div>
-      <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:${m.booked ? Math.round(s.val/m.booked*100) : 0}%;background:${s.color}22;color:${s.color};">${s.val}</div></div>
-      <div class="funnel-rate">${s.pct ? `<span style="font-size:13px;font-weight:500;color:var(--text);">${s.val}</span>&nbsp;<span style="font-size:10px;color:#7a7a85;">${s.pct}</span>` : `<span style="font-size:13px;font-weight:500;color:var(--text);">${s.val}</span>`}</div>
+      <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:${m.booked ? Math.round(s.val/m.booked*100) : 0}%;background:${s.color}22;color:${s.color};">&nbsp;</div></div>
+      <div class="funnel-rate" style="width:80px;text-align:right;">${s.right}</div>
     </div>`).join('');
 }
 
