@@ -295,6 +295,45 @@
       </div>
     </div>
 
+
+    <!-- Knowledge Base -->
+    <div style="margin-top:2.5rem;padding-top:2rem;border-top:1px solid var(--border);">
+      <div style="font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1.5rem;">Knowledge base — de dónde viene cada número</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
+          <div style="font-size:13px;font-weight:500;color:var(--accent2);margin-bottom:8px;">Bookeados — target ≥ 62/mes</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Cuenta todas las personas que agendaron una llamada de ventas ese mes. En el proceso actual, bookear y aplicar es el mismo paso — si alguien aplica, ya tiene call agendada.<br><br><strong style="color:var(--text);">Por qué 62:</strong> para cerrar 17 ventas necesitas 38 showed. Como históricamente solo el 62% de los bookeados termina mostrando (el resto cancela o no aparece), necesitas 62 bookeados para llegar a 38 showed.</div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
+          <div style="font-size:13px;font-weight:500;color:var(--warn);margin-bottom:8px;">Calls Showed (Show Rate) — target ≥ 80%</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Muestra cuántas personas de las que bookearon aparecieron a la llamada. Se calcula como:<br><br><strong style="color:var(--text);">showed ÷ (showed + no-show)</strong><br><br>Las cancelaciones no se incluyen porque son diferentes — el que cancela avisó y puede reagendarse, el no-show simplemente no apareció.<br><br><strong style="color:var(--text);">Por qué 80%:</strong> es el promedio real de los últimos 14 meses de data.</div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
+          <div style="font-size:13px;font-weight:500;color:var(--danger);margin-bottom:8px;">Cancelaciones — target ≤ 18%</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Porcentaje de personas que agendaron pero cancelaron antes de la llamada. Se calcula como:<br><br><strong style="color:var(--text);">cancelaciones ÷ bookeados totales</strong><br><br>Una cancelación no es necesariamente una pérdida — hay oportunidad de reagendar. Pero si el % es alto indica que la gente no estaba suficientemente comprometida al momento de agendar, o que faltó seguimiento.<br><br><strong style="color:var(--text);">Por qué 18%:</strong> promedio histórico real de los últimos 14 meses.</div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
+          <div style="font-size:13px;font-weight:500;color:var(--accent2);margin-bottom:8px;">Sales (Close Rate) — target ≥ 45%</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Muestra cuántas personas de las que aparecieron a la llamada terminaron comprando. Se calcula como:<br><br><strong style="color:var(--text);">ventas brutas ÷ showed</strong><br><br>Este número mide la efectividad del equipo de ventas en la llamada. Si el % es bajo, el problema no está en el volumen ni en el seguimiento — está en la llamada misma.<br><br><strong style="color:var(--text);">Por qué 45%:</strong> promedio histórico real de los últimos 14 meses.</div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
+          <div style="font-size:13px;font-weight:500;color:var(--danger);margin-bottom:8px;">Refunds — target ≤ 2/mes</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Cuenta las ventas que fueron reembolsadas, usando la <strong style="color:var(--text);">fecha de venta</strong> (no la fecha del reembolso) para que todo quede dentro del mismo mes.<br><br>El promedio histórico es <strong style="color:var(--text);">1.4 refunds/mes</strong>. Tener 1 o 2 es normal. La alerta se activa con 3 o más — eso indica un patrón que vale la pena revisar.<br><br>El peor mes registrado fue octubre 2025 con 5 refunds.</div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
+          <div style="font-size:13px;font-weight:500;color:var(--green);margin-bottom:8px;">Ventas netas — target 17/mes</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Es el número final que importa. Se calcula como:<br><br><strong style="color:var(--text);">ventas brutas − refunds</strong><br><br>Las ventas brutas incluyen todos los que compraron ese mes, aunque después hayan pedido reembolso. Las ventas netas es lo que realmente se cobró.<br><br><strong style="color:var(--text);">Por qué 17:</strong> es el objetivo mensual definido por el equipo. Para llegar ahí necesitas el embudo completo funcionando: 62 bookeados → 38 showed → 17 ventas.</div>
+        </div>
+
+      </div>
+    </div>
   </main>
 </div>
 
