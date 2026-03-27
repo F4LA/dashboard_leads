@@ -4,55 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard — Adquisición de Clientes</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js">
-function updateKPIs(monthly, curKey) {
-  const cur = monthly[curKey] || {booked:0,showed:0,noshow:0,cancelled:0,sales:0};
-  const showRate   = cur.showed + cur.noshow > 0 ? Math.round(cur.showed / (cur.showed + cur.noshow) * 100) : 0;
-  const cancelRate = cur.booked > 0 ? Math.round(cur.cancelled / cur.booked * 100) : 0;
-  const closeRate  = cur.showed > 0 ? Math.round(cur.sales / cur.showed * 100) : 0;
-
-  document.getElementById('kpi-booked').textContent = cur.booked;
-  document.getElementById('kpi-show').textContent   = showRate + '%';
-  document.getElementById('kpi-cancel').textContent = cancelRate + '%';
-  document.getElementById('kpi-sales').textContent  = cur.sales;
-
-  const bookedPct = Math.min(Math.round(cur.booked / TARGET_BOOKED * 100), 100);
-  const salesPct  = Math.min(Math.round(cur.sales  / TARGET_SALES  * 100), 100);
-  document.getElementById('bar-booked').style.width = bookedPct + '%';
-  document.getElementById('bar-sales').style.width  = salesPct + '%';
-  document.getElementById('kpi-booked-pct').textContent = bookedPct + '%';
-  document.getElementById('kpi-sales-pct').textContent  = salesPct + '%';
-
-  const setBadge = (id, val, good, warn, invert) => {
-    const el = document.getElementById(id);
-    let cls, text;
-    if (!invert) {
-      cls  = val >= good ? 'badge-green' : val >= warn ? 'badge-warn' : 'badge-red';
-      text = val >= good ? '✓ En target' : val >= warn ? '⚠ Cerca'   : '✗ Bajo target';
-    } else {
-      cls  = val <= good ? 'badge-green' : val <= warn ? 'badge-warn' : 'badge-red';
-      text = val <= good ? '✓ En target' : val <= warn ? '⚠ Cerca'   : '✗ Alto';
-    }
-    el.className = 'kpi-badge ' + cls;
-    el.textContent = text;
-  };
-  setBadge('badge-show',   showRate,   TARGET_SHOW,   65, false);
-  setBadge('badge-cancel', cancelRate, TARGET_CANCEL, 25, true);
-
-  const monthLabel = document.getElementById('month-selector');
-  const selectedLabel = monthLabel ? monthLabel.options[monthLabel.selectedIndex]?.text : '';
-
-  const alerts = [];
-  if (cur.booked < 30)   alerts.push({color:'#f05a4a', text:`<strong>Volumen bajo:</strong> Solo ${cur.booked} bookeados en ${selectedLabel}. Target es 38.`});
-  if (cancelRate > 25)   alerts.push({color:'#f0a84a', text:`<strong>Cancelaciones altas:</strong> ${cancelRate}% están cancelando en ${selectedLabel}. Revisar seguimiento pre-llamada.`});
-  if (showRate < 65)     alerts.push({color:'#f05a4a', text:`<strong>Show rate crítico:</strong> Solo ${showRate}% aparecieron a la llamada en ${selectedLabel}.`});
-  if (closeRate >= 45)   alerts.push({color:'#4af09a', text:`<strong>Close rate sólido:</strong> ${closeRate}% de los que mostraron cerraron en ${selectedLabel}.`});
-
-  document.getElementById('alerts-container').innerHTML = alerts.map(a =>
-    `<div class="alert"><div class="alert-dot" style="background:${a.color}"></div><div class="alert-text">${a.text}</div></div>`
-  ).join('');
-}
-</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -86,6 +38,9 @@ function updateKPIs(monthly, curKey) {
   .btn-refresh { background: var(--surface); color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; font-size: 12px; cursor: pointer; font-family: var(--sans); width: auto; }
   .btn-refresh:hover { color: var(--text); }
   main { padding: 2rem; max-width: 1200px; margin: 0 auto; }
+  .month-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; }
+  .month-bar label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .month-bar select { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; font-family: var(--mono); font-size: 13px; outline: none; cursor: pointer; }
   .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-bottom: 2rem; }
   .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; position: relative; overflow: hidden; }
   .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--card-accent, var(--border)); }
@@ -156,13 +111,13 @@ function updateKPIs(monthly, curKey) {
     </div>
   </header>
   <main>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;">
-      <label style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Mes</label>
-      <select id="month-selector" onchange="onMonthChange()" style="background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-family:var(--mono);font-size:13px;outline:none;cursor:pointer;"></select>
+    <div class="month-bar">
+      <label>Mes</label>
+      <select id="month-selector" onchange="onMonthChange()"></select>
     </div>
     <div class="kpi-grid">
       <div class="kpi-card" style="--card-accent: var(--accent2)">
-        <div class="kpi-label">Bookeados este mes</div>
+        <div class="kpi-label">Bookeados</div>
         <div class="kpi-value" id="kpi-booked">—</div>
         <div class="target-bar-wrap">
           <div class="target-bar-bg"><div class="target-bar-fill" id="bar-booked" style="width:0%"></div></div>
@@ -182,7 +137,7 @@ function updateKPIs(monthly, curKey) {
         <div class="kpi-badge" id="badge-cancel">—</div>
       </div>
       <div class="kpi-card" style="--card-accent: var(--accent)">
-        <div class="kpi-label">Ventas este mes</div>
+        <div class="kpi-label">Ventas</div>
         <div class="kpi-value" id="kpi-sales">—</div>
         <div class="target-bar-wrap">
           <div class="target-bar-bg"><div class="target-bar-fill" id="bar-sales" style="width:0%"></div></div>
@@ -202,7 +157,7 @@ function updateKPIs(monthly, curKey) {
         <div class="chart-wrap" style="height:220px"><canvas id="cVolumen"></canvas></div>
       </div>
       <div class="chart-card">
-        <div class="chart-title">Embudo — últimos 3 meses</div>
+        <div class="chart-title">Embudo — mes seleccionado</div>
         <div id="funnel-container"></div>
       </div>
       <div class="chart-card">
@@ -224,12 +179,13 @@ function updateKPIs(monthly, curKey) {
 <script>
 const SHEET_ID = '1ctM6K8hQfh73bi7f-MtXkqW3BaPxU73NZf8xPJQUEOc';
 const TARGET_BOOKED = 38;
-const TARGET_SALES = 17;
-const TARGET_SHOW = 75;
+const TARGET_SALES  = 17;
+const TARGET_SHOW   = 75;
 const TARGET_CANCEL = 15;
 
 let apiKey = localStorage.getItem('gsheets_api_key') || '';
 let charts = {};
+let globalMonthly = {};
 
 if (apiKey) { showLoading(); loadData(); }
 
@@ -283,7 +239,6 @@ function parseDate(str) {
 function processData(rows) {
   if (!rows || rows.length < 2) return;
   const headers = rows[0].map(h => h.trim().toLowerCase());
-
   const col = name => headers.findIndex(h => h.trim().toLowerCase() === name.toLowerCase());
   const iApp    = col('application date');
   const iBooked = col('booked call (qualified)');
@@ -305,46 +260,106 @@ function processData(rows) {
     else if (cs === 'cancelled') monthly[key].cancelled++;
     if ((r[iSale] || '').trim().toLowerCase() === 'yes') monthly[key].sales++;
   }
+  globalMonthly = monthly;
   renderDashboard(monthly);
 }
 
-let allMonthlyData = {};
+function monthLabel(k) {
+  const [y, mo] = k.split('-');
+  const names = ['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return names[+mo] + ' ' + y.slice(2);
+}
 
 function onMonthChange() {
-  const sel = document.getElementById('month-selector').value;
-  updateKPIs(allMonthlyData, sel);
+  const key = document.getElementById('month-selector').value;
+  updateKPIs(key);
+  updateFunnel(key);
+}
+
+function updateKPIs(curKey) {
+  const cur = globalMonthly[curKey] || {booked:0,showed:0,noshow:0,cancelled:0,sales:0};
+  const showRate   = cur.showed + cur.noshow > 0 ? Math.round(cur.showed / (cur.showed + cur.noshow) * 100) : 0;
+  const cancelRate = cur.booked > 0 ? Math.round(cur.cancelled / cur.booked * 100) : 0;
+  const closeRate  = cur.showed > 0 ? Math.round(cur.sales / cur.showed * 100) : 0;
+
+  document.getElementById('kpi-booked').textContent = cur.booked;
+  document.getElementById('kpi-show').textContent   = showRate + '%';
+  document.getElementById('kpi-cancel').textContent = cancelRate + '%';
+  document.getElementById('kpi-sales').textContent  = cur.sales;
+
+  const bookedPct = Math.min(Math.round(cur.booked / TARGET_BOOKED * 100), 100);
+  const salesPct  = Math.min(Math.round(cur.sales  / TARGET_SALES  * 100), 100);
+  document.getElementById('bar-booked').style.width = bookedPct + '%';
+  document.getElementById('bar-sales').style.width  = salesPct + '%';
+  document.getElementById('kpi-booked-pct').textContent = bookedPct + '%';
+  document.getElementById('kpi-sales-pct').textContent  = salesPct + '%';
+
+  const setBadge = (id, val, good, warn, invert) => {
+    const el = document.getElementById(id);
+    let cls, text;
+    if (!invert) {
+      cls  = val >= good ? 'badge-green' : val >= warn ? 'badge-warn' : 'badge-red';
+      text = val >= good ? '✓ En target' : val >= warn ? '⚠ Cerca' : '✗ Bajo target';
+    } else {
+      cls  = val <= good ? 'badge-green' : val <= warn ? 'badge-warn' : 'badge-red';
+      text = val <= good ? '✓ En target' : val <= warn ? '⚠ Cerca' : '✗ Alto';
+    }
+    el.className = 'kpi-badge ' + cls;
+    el.textContent = text;
+  };
+  setBadge('badge-show',   showRate,   TARGET_SHOW,   65, false);
+  setBadge('badge-cancel', cancelRate, TARGET_CANCEL, 25, true);
+
+  const label = monthLabel(curKey).toUpperCase();
+  const alerts = [];
+  if (cur.booked < 30)  alerts.push({color:'#f05a4a', text:`<strong>Volumen bajo:</strong> Solo ${cur.booked} bookeados en ${label}. Target es 38.`});
+  if (cancelRate > 25)  alerts.push({color:'#f0a84a', text:`<strong>Cancelaciones altas:</strong> ${cancelRate}% están cancelando en ${label}.`});
+  if (showRate < 65)    alerts.push({color:'#f05a4a', text:`<strong>Show rate crítico:</strong> Solo ${showRate}% aparecieron en ${label}.`});
+  if (closeRate >= 45)  alerts.push({color:'#4af09a', text:`<strong>Close rate sólido:</strong> ${closeRate}% de los que mostraron cerraron en ${label}.`});
+  document.getElementById('alerts-container').innerHTML = alerts.map(a =>
+    `<div class="alert"><div class="alert-dot" style="background:${a.color}"></div><div class="alert-text">${a.text}</div></div>`
+  ).join('');
+}
+
+function updateFunnel(key) {
+  const m = globalMonthly[key] || {booked:0,showed:0,noshow:0,cancelled:0,sales:0};
+  const steps = [
+    {label:'Bookearon', val:m.booked, color:'#4a8ff0', pct:null},
+    {label:'Showed',    val:m.showed, color:'#c8f04a', pct:m.booked ? Math.round(m.showed/m.booked*100)+'%':'—'},
+    {label:'Ventas',    val:m.sales,  color:'#4af09a', pct:m.showed ? Math.round(m.sales/m.showed*100)+'%':'—'},
+  ];
+  document.getElementById('funnel-container').innerHTML =
+    `<div style="margin-bottom:0.5rem;font-size:11px;color:#7a7a85;text-transform:uppercase;letter-spacing:0.06em;">${monthLabel(key)}</div>` +
+    steps.map(s => `<div class="funnel-row">
+      <div class="funnel-label">${s.label}</div>
+      <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:${m.booked ? Math.round(s.val/m.booked*100) : 0}%;background:${s.color}22;color:${s.color};">${s.val}</div></div>
+      <div class="funnel-rate">${s.pct||''}</div>
+    </div>`).join('');
 }
 
 function renderDashboard(monthly) {
-  allMonthlyData = monthly;
   const keys = Object.keys(monthly).sort().filter(k => k >= '2024-12');
 
   // Populate month selector
   const sel = document.getElementById('month-selector');
-  const prevVal = sel.value;
   sel.innerHTML = '';
   [...keys].reverse().forEach(k => {
     const opt = document.createElement('option');
     opt.value = k;
-    opt.textContent = monthName(k).toUpperCase();
+    opt.textContent = monthLabel(k).toUpperCase();
     sel.appendChild(opt);
   });
-  if (prevVal && keys.includes(prevVal)) sel.value = prevVal;
-  const monthName = k => {
-    const [y,mo] = k.split('-');
-    const names = ['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-    return names[+mo] + ' ' + y.slice(2);
-  };
 
-  // Default to most recent month
+  // Default to current month or most recent
   const now = new Date();
-  const defaultKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const selEl = document.getElementById('month-selector');
-  if (!selEl.value) selEl.value = keys.includes(defaultKey) ? defaultKey : keys[keys.length-1];
+  const curKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  sel.value = keys.includes(curKey) ? curKey : keys[keys.length - 1];
 
-  updateKPIs(monthly, selEl.value);
+  updateKPIs(sel.value);
+  updateFunnel(sel.value);
 
-  const labels    = keys.map(monthName);
+  // Charts (always full history)
+  const labels    = keys.map(monthLabel);
   const booked    = keys.map(k => monthly[k].booked);
   const showed    = keys.map(k => monthly[k].showed);
   const sales     = keys.map(k => monthly[k].sales);
@@ -367,25 +382,6 @@ function renderDashboard(monthly) {
     options: {responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
       scales:{x:{ticks:tickOpts, grid:gridOpts}, y:{ticks:{...tickOpts, autoSkip:true}, grid:gridOpts, beginAtZero:true}}}
   });
-
-  const last3 = keys.slice(-3);
-  document.getElementById('funnel-container').innerHTML = last3.map(k => {
-    const m = monthly[k];
-    const maxB = Math.max(...last3.map(x => monthly[x].booked), 1);
-    const steps = [
-      {label:'Bookearon', val:m.booked, color:'#4a8ff0', pct:null},
-      {label:'Showed',    val:m.showed, color:'#c8f04a', pct:m.booked ? Math.round(m.showed/m.booked*100)+'%':'—'},
-      {label:'Ventas',    val:m.sales,  color:'#4af09a', pct:m.showed ? Math.round(m.sales/m.showed*100)+'%':'—'},
-    ];
-    return `<div style="margin-bottom:1.5rem;">
-      <div style="font-size:11px;color:#7a7a85;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">${monthName(k)}</div>
-      ${steps.map(s=>`<div class="funnel-row">
-        <div class="funnel-label">${s.label}</div>
-        <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:${Math.round(s.val/maxB*100)}%;background:${s.color}22;color:${s.color};">${s.val}</div></div>
-        <div class="funnel-rate">${s.pct||''}</div>
-      </div>`).join('')}
-    </div>`;
-  }).join('');
 
   destroy('ns');
   charts.ns = new Chart(document.getElementById('cNoshow'), {
@@ -417,54 +413,6 @@ function renderDashboard(monthly) {
   document.getElementById('last-updated').textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
   document.getElementById('loading').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
-}
-
-function updateKPIs(monthly, curKey) {
-  const cur = monthly[curKey] || {booked:0,showed:0,noshow:0,cancelled:0,sales:0};
-  const showRate   = cur.showed + cur.noshow > 0 ? Math.round(cur.showed / (cur.showed + cur.noshow) * 100) : 0;
-  const cancelRate = cur.booked > 0 ? Math.round(cur.cancelled / cur.booked * 100) : 0;
-  const closeRate  = cur.showed > 0 ? Math.round(cur.sales / cur.showed * 100) : 0;
-
-  document.getElementById('kpi-booked').textContent = cur.booked;
-  document.getElementById('kpi-show').textContent   = showRate + '%';
-  document.getElementById('kpi-cancel').textContent = cancelRate + '%';
-  document.getElementById('kpi-sales').textContent  = cur.sales;
-
-  const bookedPct = Math.min(Math.round(cur.booked / TARGET_BOOKED * 100), 100);
-  const salesPct  = Math.min(Math.round(cur.sales  / TARGET_SALES  * 100), 100);
-  document.getElementById('bar-booked').style.width = bookedPct + '%';
-  document.getElementById('bar-sales').style.width  = salesPct + '%';
-  document.getElementById('kpi-booked-pct').textContent = bookedPct + '%';
-  document.getElementById('kpi-sales-pct').textContent  = salesPct + '%';
-
-  const setBadge = (id, val, good, warn, invert) => {
-    const el = document.getElementById(id);
-    let cls, text;
-    if (!invert) {
-      cls  = val >= good ? 'badge-green' : val >= warn ? 'badge-warn' : 'badge-red';
-      text = val >= good ? '✓ En target' : val >= warn ? '⚠ Cerca'   : '✗ Bajo target';
-    } else {
-      cls  = val <= good ? 'badge-green' : val <= warn ? 'badge-warn' : 'badge-red';
-      text = val <= good ? '✓ En target' : val <= warn ? '⚠ Cerca'   : '✗ Alto';
-    }
-    el.className = 'kpi-badge ' + cls;
-    el.textContent = text;
-  };
-  setBadge('badge-show',   showRate,   TARGET_SHOW,   65, false);
-  setBadge('badge-cancel', cancelRate, TARGET_CANCEL, 25, true);
-
-  const monthLabel = document.getElementById('month-selector');
-  const selectedLabel = monthLabel ? monthLabel.options[monthLabel.selectedIndex]?.text : '';
-
-  const alerts = [];
-  if (cur.booked < 30)   alerts.push({color:'#f05a4a', text:`<strong>Volumen bajo:</strong> Solo ${cur.booked} bookeados en ${selectedLabel}. Target es 38.`});
-  if (cancelRate > 25)   alerts.push({color:'#f0a84a', text:`<strong>Cancelaciones altas:</strong> ${cancelRate}% están cancelando en ${selectedLabel}. Revisar seguimiento pre-llamada.`});
-  if (showRate < 65)     alerts.push({color:'#f05a4a', text:`<strong>Show rate crítico:</strong> Solo ${showRate}% aparecieron a la llamada en ${selectedLabel}.`});
-  if (closeRate >= 45)   alerts.push({color:'#4af09a', text:`<strong>Close rate sólido:</strong> ${closeRate}% de los que mostraron cerraron en ${selectedLabel}.`});
-
-  document.getElementById('alerts-container').innerHTML = alerts.map(a =>
-    `<div class="alert"><div class="alert-dot" style="background:${a.color}"></div><div class="alert-text">${a.text}</div></div>`
-  ).join('');
 }
 </script>
 </body>
