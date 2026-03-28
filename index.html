@@ -551,7 +551,7 @@ function updateRecommendations(curKey) {
   const closeRate  = cur.showed > 0 ? Math.round(cur.sales / cur.showed * 100) : 0;
 
   const issues = [];
-  if (cur.booked < 46)    issues.push({color:'var(--danger)', icon:'↓', title:'Low volume', text:'You don't have enough booked calls this month. Focus on increasing lead generation — review which channels are active and push for more outreach.'});
+  if (cur.booked < 46)    issues.push({color:'var(--danger)', icon:'↓', title:'Low volume', text:"You don't have enough booked calls this month. Focus on increasing lead generation — review which channels are active and push for more outreach."});
   if (cancelRate > 28)    issues.push({color:'var(--warn)',   icon:'✕', title:'High cancellations', text:'Too many people are cancelling before the call. Strengthen commitment at booking and add follow-up reminders between booking and the call date.'});
   if (showRate < 70)      issues.push({color:'var(--warn)',   icon:'↓', title:'Low show rate', text:'People are booking but not showing up. Improve pre-call follow-up — send reminders 24h and 1h before the call.'});
   if (closeRate < 35)     issues.push({color:'var(--danger)', icon:'↓', title:'Low close rate', text:'People are showing up but not buying. The problem is on the sales call — review the pitch, how objections are handled, and the offer.'});
