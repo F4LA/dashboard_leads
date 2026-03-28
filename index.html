@@ -204,6 +204,18 @@
       </div>
     </div>
 
+    <!-- Recommendations -->
+    <div id="recommendations-section" style="margin-bottom:1.5rem;"></div>
+
+    <!-- Source Performance -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:2rem;">
+      <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Source performance — last 6 months</div>
+        <div style="font-size:11px;color:var(--muted);">including selected month</div>
+      </div>
+      <div id="source-table-container" style="overflow-x:auto;"></div>
+    </div>
+
     <!-- Reference guide -->
     <div style="margin-top:2.5rem;padding-top:2rem;border-top:1px solid var(--border);">
       <div style="font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1.5rem;">Reference guide</div>
@@ -448,7 +460,7 @@ function processData(rows) {
 
 function monthLabel(k) {
   const [y, mo] = k.split('-');
-  const names = ['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const names = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   return names[+mo] + ' ' + y.slice(2);
 }
 
@@ -557,6 +569,7 @@ function updateRecommendations(curKey) {
   if (closeRate < 35)     issues.push({color:'var(--danger)', icon:'↓', title:'Low close rate', text:'People are showing up but not buying. The problem is on the sales call — review the pitch, how objections are handled, and the offer.'});
 
   const container = document.getElementById('recommendations-section');
+  if (!container) return;
   if (issues.length === 0) {
     container.innerHTML = `<div style="background:rgba(74,240,154,0.06);border:1px solid rgba(74,240,154,0.2);border-radius:var(--radius);padding:1rem 1.25rem;display:flex;align-items:center;gap:10px;">
       <div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;"></div>
@@ -632,7 +645,9 @@ function updateSourceTable(curKey) {
     </tbody>
   </table>`;
 
-  document.getElementById('source-table-container').innerHTML = html;
+  const srcContainer = document.getElementById('source-table-container');
+  if (!srcContainer) return;
+  srcContainer.innerHTML = html;
 }
 
 function renderDashboard(monthly) {
