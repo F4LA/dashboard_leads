@@ -3,239 +3,77 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard — Adquisición de Clientes</title>
+<title>Dashboard — Client Acquisition</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --bg: #0f0f11;
-    --surface: #17171a;
-    --surface2: #1e1e23;
-    --border: rgba(255,255,255,0.07);
-    --text: #f0efe8;
-    --muted: #7a7a85;
-    --accent: #c8f04a;
-    --accent2: #4a8ff0;
-    --danger: #f05a4a;
-    --warn: #f0a84a;
-    --green: #4af09a;
-    --radius: 12px;
-    --mono: 'DM Mono', monospace;
-    --sans: 'DM Sans', sans-serif;
+    --bg: #0f0f11; --surface: #17171a; --border: rgba(255,255,255,0.07);
+    --text: #f0efe8; --muted: #7a7a85; --accent: #c8f04a; --accent2: #4a8ff0;
+    --danger: #f05a4a; --warn: #f0a84a; --green: #4af09a; --radius: 12px;
+    --mono: 'DM Mono', monospace; --sans: 'DM Sans', sans-serif;
   }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    font-size: 14px;
-    min-height: 100vh;
-    padding: 0;
-  }
-
-  /* API Key screen */
-  #setup-screen {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-  }
-  .setup-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 2.5rem;
-    max-width: 480px;
-    width: 100%;
-  }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; min-height: 100vh; }
+  #setup-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+  .setup-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.5rem; max-width: 480px; width: 100%; }
   .setup-card h1 { font-size: 20px; font-weight: 500; margin-bottom: 6px; }
   .setup-card p { color: var(--muted); font-size: 13px; line-height: 1.6; margin-bottom: 1.5rem; }
-  .setup-card input {
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 13px;
-    margin-bottom: 12px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
+  .setup-card input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-family: var(--mono); font-size: 13px; margin-bottom: 12px; outline: none; transition: border-color 0.2s; }
   .setup-card input:focus { border-color: var(--accent); }
   .setup-card input::placeholder { color: var(--muted); }
-  .btn {
-    background: var(--accent);
-    color: #0f0f11;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 20px;
-    font-family: var(--sans);
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: opacity 0.2s;
-    width: 100%;
-  }
+  .btn { background: var(--accent); color: #0f0f11; border: none; border-radius: 8px; padding: 10px 20px; font-family: var(--sans); font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; }
   .btn:hover { opacity: 0.85; }
-  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
   #setup-error { color: var(--danger); font-size: 12px; margin-top: 8px; display: none; }
-
-  /* Dashboard */
   #dashboard { display: none; }
-
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1.25rem 2rem;
-    border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    background: var(--bg);
-    z-index: 10;
-  }
+  #loading { min-height: 100vh; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+  .spinner { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loading p { font-size: 13px; color: var(--muted); }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 2rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 10; }
   .header-left { display: flex; align-items: center; gap: 12px; }
   .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
-  header h1 { font-size: 15px; font-weight: 500; letter-spacing: -0.01em; }
+  header h1 { font-size: 15px; font-weight: 500; }
   .last-updated { font-size: 11px; color: var(--muted); font-family: var(--mono); }
-  .btn-refresh {
-    background: var(--surface);
-    color: var(--muted);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 6px 14px;
-    font-size: 12px;
-    cursor: pointer;
-    font-family: var(--sans);
-    transition: all 0.2s;
-    width: auto;
-  }
-  .btn-refresh:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
-
+  .btn-refresh { background: var(--surface); color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; font-size: 12px; cursor: pointer; font-family: var(--sans); width: auto; }
+  .btn-refresh:hover { color: var(--text); }
   main { padding: 2rem; max-width: 1200px; margin: 0 auto; }
-
-  /* KPI cards */
-  .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0,1fr));
-    gap: 12px;
-    margin-bottom: 2rem;
-  }
-  .kpi-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.25rem;
-    position: relative;
-    overflow: hidden;
-  }
-  .kpi-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: var(--card-accent, var(--border));
-  }
+  .month-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; }
+  .month-bar label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .month-bar select { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; font-family: var(--mono); font-size: 13px; outline: none; cursor: pointer; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; margin-bottom: 2rem; }
+  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; position: relative; overflow: hidden; }
+  .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--card-accent, var(--border)); }
   .kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
   .kpi-value { font-size: 32px; font-weight: 300; letter-spacing: -0.02em; line-height: 1; margin-bottom: 6px; font-family: var(--mono); }
   .kpi-meta { font-size: 11px; color: var(--muted); }
-  .kpi-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 500;
-    margin-top: 6px;
-  }
+  .kpi-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; margin-top: 6px; }
   .badge-green { background: rgba(74,240,154,0.12); color: var(--green); }
-  .badge-warn  { background: rgba(240,168,74,0.12);  color: var(--warn); }
-  .badge-red   { background: rgba(240,90,74,0.12);   color: var(--danger); }
-
-  /* Target bar */
+  .badge-warn  { background: rgba(240,168,74,0.12); color: var(--warn); }
+  .badge-red   { background: rgba(240,90,74,0.12); color: var(--danger); }
   .target-bar-wrap { margin-top: 8px; }
   .target-bar-bg { background: rgba(255,255,255,0.07); border-radius: 4px; height: 4px; }
   .target-bar-fill { height: 4px; border-radius: 4px; background: var(--accent); transition: width 0.8s ease; }
   .target-label { font-size: 10px; color: var(--muted); margin-top: 4px; font-family: var(--mono); }
-
-  /* Charts grid */
-  .charts-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 16px;
-  }
-  .chart-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.5rem;
-  }
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; }
   .chart-card.full { grid-column: 1 / -1; }
   .chart-title { font-size: 12px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1.25rem; }
   .chart-wrap { position: relative; width: 100%; }
-
-  /* Funnel visual */
-  .funnel-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border);
-  }
+  .funnel-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
   .funnel-row:last-child { border-bottom: none; }
   .funnel-label { width: 110px; font-size: 12px; color: var(--muted); flex-shrink: 0; }
   .funnel-bar-wrap { flex: 1; }
-  .funnel-bar { height: 28px; border-radius: 4px; display: flex; align-items: center; padding: 0 10px; font-size: 12px; font-weight: 500; font-family: var(--mono); transition: width 0.8s ease; min-width: 40px; }
-  .funnel-val { width: 50px; text-align: right; font-family: var(--mono); font-size: 13px; font-weight: 500; flex-shrink: 0; }
+  .funnel-bar { height: 28px; border-radius: 4px; display: flex; align-items: center; padding: 0 10px; font-size: 12px; font-weight: 500; font-family: var(--mono); min-width: 40px; }
   .funnel-rate { width: 50px; text-align: right; font-family: var(--mono); font-size: 11px; color: var(--muted); flex-shrink: 0; }
-
-  /* Legend */
   .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 12px; }
   .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
   .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
-
-  /* Alert row */
   .alerts { display: flex; gap: 12px; margin-bottom: 2rem; flex-wrap: wrap; }
-  .alert {
-    flex: 1;
-    min-width: 200px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1rem 1.25rem;
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-  }
+  .alert { flex: 1; min-width: 200px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; display: flex; align-items: flex-start; gap: 10px; }
   .alert-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
   .alert-text { font-size: 12px; line-height: 1.5; color: var(--muted); }
   .alert-text strong { color: var(--text); font-weight: 500; }
-
-  /* Loading */
-  #loading {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    display: none;
-  }
-  .spinner {
-    width: 32px; height: 32px;
-    border: 2px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  #loading p { font-size: 13px; color: var(--muted); }
-
   @media (max-width: 768px) {
     .kpi-grid { grid-template-columns: repeat(2, 1fr); }
     .charts-grid { grid-template-columns: 1fr; }
@@ -246,102 +84,269 @@
 </head>
 <body>
 
-<!-- Setup screen -->
 <div id="setup-screen">
   <div class="setup-card">
     <h1>Dashboard — Leads</h1>
-    <p>Ingresa tu API key de Google Cloud para conectar con el sheet. La key se guarda solo en tu navegador y nunca sale de tu computadora.</p>
+    <p>Enter your Google Cloud API key to connect to the sheet. The key is saved only in your browser and never leaves your device.</p>
     <input type="password" id="api-key-input" placeholder="AIza..." autocomplete="off" />
-    <button class="btn" onclick="connect()">Conectar</button>
-    <div id="setup-error">No se pudo conectar. Verifica que la API key sea correcta y que el sheet esté compartido como "cualquier persona con el link puede ver".</div>
+    <button class="btn" onclick="connect()">Connect</button>
+    <div id="setup-error">Could not connect. Make sure your API key is correct and the sheet is shared as "anyone with the link can view".</div>
   </div>
 </div>
 
-<!-- Loading -->
 <div id="loading">
   <div class="spinner"></div>
-  <p>Cargando datos...</p>
+  <p>Loading data...</p>
 </div>
 
-<!-- Dashboard -->
 <div id="dashboard">
   <header>
     <div class="header-left">
       <div class="logo-dot"></div>
-      <h1>Adquisición de Clientes</h1>
+      <h1>Client Acquisition</h1>
     </div>
     <div style="display:flex;align-items:center;gap:12px;">
       <span class="last-updated" id="last-updated"></span>
-      <button class="btn-refresh" onclick="loadData()">↻ Actualizar</button>
+      <button class="btn-refresh" onclick="loadData()">↻ Refresh</button>
     </div>
   </header>
-
   <main>
-    <!-- KPIs -->
+    <div class="month-bar">
+      <label>Month</label>
+      <select id="month-selector" onchange="onMonthChange()"></select>
+    </div>
     <div class="kpi-grid">
       <div class="kpi-card" style="--card-accent: var(--accent2)">
-        <div class="kpi-label">Bookeados este mes</div>
+        <div class="kpi-label">Booked Calls</div>
         <div class="kpi-value" id="kpi-booked">—</div>
         <div class="target-bar-wrap">
           <div class="target-bar-bg"><div class="target-bar-fill" id="bar-booked" style="width:0%"></div></div>
-          <div class="target-label">Target: 38 | <span id="kpi-booked-pct">—</span></div>
+          <div class="target-label">Target: 62 | <span id="kpi-booked-pct">—</span></div>
         </div>
       </div>
       <div class="kpi-card" style="--card-accent: var(--warn)">
-        <div class="kpi-label">Show rate</div>
-        <div class="kpi-value" id="kpi-show">—</div>
+        <div class="kpi-label">Calls Showed (Show Rate)</div>
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;">
+          <div class="kpi-value" id="kpi-show-abs" style="margin-bottom:0;">—</div>
+          <div style="font-size:16px;color:var(--muted);font-family:var(--mono);" id="kpi-show">(—)</div>
+        </div>
         <div class="kpi-meta">showed ÷ (showed + no-show)</div>
+        <div class="target-bar-wrap">
+          <div class="target-bar-bg"><div class="target-bar-fill" id="bar-show" style="width:0%;background:var(--warn)"></div></div>
+          <div class="target-label">Target: 80% | <span id="kpi-show-pct">—</span></div>
+        </div>
         <div class="kpi-badge" id="badge-show">—</div>
       </div>
       <div class="kpi-card" style="--card-accent: var(--danger)">
-        <div class="kpi-label">Cancelaciones</div>
-        <div class="kpi-value" id="kpi-cancel">—</div>
-        <div class="kpi-meta">% de bookeados que cancelan</div>
+        <div class="kpi-label">Cancellations (Cancel Rate)</div>
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;">
+          <div class="kpi-value" id="kpi-cancel-abs" style="margin-bottom:0;">—</div>
+          <div style="font-size:16px;color:var(--muted);font-family:var(--mono);" id="kpi-cancel">(—)</div>
+        </div>
+        <div class="kpi-meta">cancellations ÷ booked</div>
+        <div class="target-label" style="margin-top:8px;">Target: ≤ 18%</div>
         <div class="kpi-badge" id="badge-cancel">—</div>
       </div>
-      <div class="kpi-card" style="--card-accent: var(--accent)">
-        <div class="kpi-label">Ventas este mes</div>
-        <div class="kpi-value" id="kpi-sales">—</div>
+      <div class="kpi-card" style="--card-accent: var(--accent2)">
+        <div class="kpi-label">Sales (Close Rate)</div>
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;">
+          <div class="kpi-value" id="kpi-close-abs" style="margin-bottom:0;">—</div>
+          <div style="font-size:16px;color:var(--muted);font-family:var(--mono);" id="kpi-close">(—)</div>
+        </div>
+        <div class="kpi-meta">sales ÷ showed</div>
         <div class="target-bar-wrap">
-          <div class="target-bar-bg"><div class="target-bar-fill" id="bar-sales" style="width:0%"></div></div>
-          <div class="target-label">Target: 17 | <span id="kpi-sales-pct">—</span></div>
+          <div class="target-bar-bg"><div class="target-bar-fill" id="bar-close" style="width:0%;background:var(--accent2)"></div></div>
+          <div class="target-label">Target: 45% | <span id="kpi-close-pct">—</span></div>
+        </div>
+        <div class="kpi-badge" id="badge-close">—</div>
+      </div>
+      <div class="kpi-card" style="--card-accent: #f05a4a">
+        <div class="kpi-label">Refunds</div>
+        <div class="kpi-value" id="kpi-refunds" style="color:var(--danger)">—</div>
+        <div class="kpi-meta">refunded sales</div>
+        <div class="target-label" style="margin-top:8px;">Target: ≤ 2 | historical avg: 1.4</div>
+      </div>
+      <div class="kpi-card" style="--card-accent: var(--green)">
+        <div class="kpi-label">Net Sales</div>
+        <div class="kpi-value" id="kpi-net-sales" style="color:var(--green)">—</div>
+        <div class="target-bar-wrap">
+          <div class="target-bar-bg"><div class="target-bar-fill" id="bar-net-sales" style="width:0%"></div></div>
+          <div class="target-label">Target: 17 | <span id="kpi-net-sales-pct">—</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="alerts" id="alerts-container"></div>
+    <div class="charts-grid">
+      <div class="chart-card full">
+        <div class="chart-title">Booked calls per month</div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#4a8ff0"></div>Booked</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#c8f04a"></div>Showed</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#4af09a"></div>Sales</div>
+        </div>
+        <div class="chart-wrap" style="height:220px"><canvas id="cVolumen"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Funnel — selected month</div>
+        <div id="funnel-container"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">No-show % per month</div>
+        <div class="chart-wrap" style="height:180px"><canvas id="cNoshow"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Cancellations per month</div>
+        <div class="chart-wrap" style="height:180px"><canvas id="cCancel"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Close Rate % per month</div>
+        <div class="chart-wrap" style="height:180px"><canvas id="cClose"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Recommendations -->
+    <div id="recommendations-section" style="margin-bottom:1.5rem;"></div>
+
+    <!-- Source Performance -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:2rem;">
+      <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Source performance — last 6 months</div>
+        <div style="font-size:11px;color:var(--muted);">including selected month</div>
+      </div>
+      <div id="source-table-container" style="overflow-x:auto;"></div>
+    </div>
+
+    <!-- Reference guide -->
+    <div style="margin-top:2.5rem;padding-top:2rem;border-top:1px solid var(--border);">
+      <div style="font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1.5rem;">Reference guide</div>
+
+      <!-- Embudo objetivo -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:16px;">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1.25rem;">To close 17 sales/month</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;">
+          <div style="text-align:center;">
+            <div style="font-size:36px;font-weight:300;font-family:var(--mono);color:#4a8ff0;">62</div>
+            <div style="font-size:12px;color:var(--muted);">booked/month</div>
+          </div>
+          <div style="font-size:20px;color:var(--border);">→</div>
+          <div style="text-align:center;">
+            <div style="font-size:36px;font-weight:300;font-family:var(--mono);color:var(--warn);">38</div>
+            <div style="font-size:12px;color:var(--muted);">showed (62%)</div>
+          </div>
+          <div style="font-size:20px;color:var(--border);">→</div>
+          <div style="text-align:center;">
+            <div style="font-size:36px;font-weight:300;font-family:var(--mono);color:var(--green);">17</div>
+            <div style="font-size:12px;color:var(--muted);">sales (45% close)</div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:12px;">If you reduce cancellations and no-shows, you need even fewer booked calls</div>
+      </div>
+
+      <!-- Tabla de métricas -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+        <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Metrics to monitor — week by week</div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border);">
+              <th style="text-align:left;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Metric</th>
+              <th style="text-align:left;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">What it measures</th>
+              <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Monthly target</th>
+              <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Weekly target</th>
+              <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Alert if...</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:12px 16px;font-weight:500;">Booked Calls<br><span style="font-size:11px;color:var(--muted);font-weight:400;">most important</span></td>
+              <td style="padding:12px 16px;color:var(--muted);font-size:12px;">People who scheduled a sales call</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">≥ 62</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">~16</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&lt; 46/month</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:12px 16px;font-weight:500;">Show rate<br><span style="font-size:11px;color:var(--muted);font-weight:400;">showed ÷ (showed + no-show)</span></td>
+              <td style="padding:12px 16px;color:var(--muted);font-size:12px;">Of those who booked, how many actually showed up to the call</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">≥ 80%</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">—</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&lt; 70%</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:12px 16px;font-weight:500;">Cancelaciones<br><span style="font-size:11px;color:var(--muted);font-weight:400;">cancellations ÷ booked</span></td>
+              <td style="padding:12px 16px;color:var(--muted);font-size:12px;">People who booked but cancelled before the call</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">≤ 18%</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">—</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&gt; 28%</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:12px 16px;font-weight:500;">Close Rate<br><span style="font-size:11px;color:var(--muted);font-weight:400;">sales ÷ showed</span></td>
+              <td style="padding:12px 16px;color:var(--muted);font-size:12px;">Of those who showed up, how many purchased</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">≥ 45%</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">—</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&lt; 35%</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:12px 16px;font-weight:500;">Refunds<br><span style="font-size:11px;color:var(--muted);font-weight:400;">by sale date</span></td>
+              <td style="padding:12px 16px;color:var(--muted);font-size:12px;">Historical avg: 1.4/month. Ideal is 0, but up to 2 is normal. Highest recorded: 5 (Oct 2025)</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">≤ 2</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">—</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&gt; 3</td>
+            </tr>
+            <tr>
+              <td style="padding:12px 16px;font-weight:500;">Net Sales<br><span style="font-size:11px;color:var(--muted);font-weight:400;">the final result</span></td>
+              <td style="padding:12px 16px;color:var(--muted);font-size:12px;">Real sales after deducting refunds. This is the number that matters</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);font-weight:500;">17</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">~4–5</td>
+              <td style="padding:12px 16px;text-align:center;font-family:var(--mono);color:var(--danger);">&lt; 12/month</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="padding:1rem 1.25rem;border-top:1px solid var(--border);background:rgba(200,240,74,0.04);">
+          <div style="font-size:12px;color:var(--muted);line-height:1.6;">
+            💡 <strong style="color:var(--text);">Quick win:</strong> if you reduce cancellations from 18% → 10%, you need ~55 booked calls instead of 62 to hit 17 sales. Cancellations are your biggest immediate opportunity.
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Alerts -->
-    <div class="alerts" id="alerts-container"></div>
 
-    <!-- Charts -->
-    <div class="charts-grid">
-      <div class="chart-card full">
-        <div class="chart-title">Bookeados por mes</div>
-        <div class="legend">
-          <div class="legend-item"><div class="legend-dot" style="background:#4a8ff0"></div>Bookearon</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#c8f04a"></div>Showed</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#4af09a"></div>Ventas</div>
+    <!-- Knowledge Base -->
+    <div style="margin-top:2.5rem;padding-top:2rem;border-top:1px solid var(--border);">
+      <div style="font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1.5rem;">Knowledge base — where each number comes from</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
+          <div style="font-size:13px;font-weight:500;color:var(--accent2);margin-bottom:8px;">Booked Calls — target ≥ 62/month</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Counts all people who scheduled a sales call that month. In the current process, booking and applying happen at the same time — if someone applies, they already have a call scheduled.<br><br><strong style="color:var(--text);">Why 62:</strong> to close 17 sales you need 38 showed. Historically only 62% of booked calls actually show up (the rest cancel or no-show), so you need 62 booked to get 38 showed.</div>
         </div>
-        <div class="chart-wrap" style="height:220px"><canvas id="cVolumen"></canvas></div>
-      </div>
 
-      <div class="chart-card">
-        <div class="chart-title">Embudo — últimos 3 meses</div>
-        <div id="funnel-container"></div>
-      </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
+          <div style="font-size:13px;font-weight:500;color:var(--warn);margin-bottom:8px;">Calls Showed (Show Rate) — target ≥ 80%</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Shows how many people who booked actually showed up to the call. Calculated as:<br><br><strong style="color:var(--text);">showed ÷ (showed + no-show)</strong><br><br>Cancellations are not included because they are different — the person who cancels gave notice and can reschedule, the no-show simply didn't appear.<br><br><strong style="color:var(--text);">Why 80%:</strong> it's the real average from the last 14 months of data.</div>
+        </div>
 
-      <div class="chart-card">
-        <div class="chart-title">No-show % por mes</div>
-        <div class="chart-wrap" style="height:180px"><canvas id="cNoshow"></canvas></div>
-      </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
+          <div style="font-size:13px;font-weight:500;color:var(--danger);margin-bottom:8px;">Cancellations — target ≤ 18%</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Percentage of people who booked but cancelled before the call. Calculated as:<br><br><strong style="color:var(--text);">cancellations ÷ total booked</strong><br><br>A cancellation is not necessarily a loss — there's an opportunity to reschedule. But if the % is high it means people weren't committed enough when booking, or follow-up was lacking.<br><br><strong style="color:var(--text);">Why 18%:</strong> real historical average from the last 14 months.</div>
+        </div>
 
-      <div class="chart-card">
-        <div class="chart-title">Cancelaciones por mes</div>
-        <div class="chart-wrap" style="height:180px"><canvas id="cCancel"></canvas></div>
-      </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
+          <div style="font-size:13px;font-weight:500;color:var(--accent2);margin-bottom:8px;">Sales (Close Rate) — target ≥ 45%</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Shows how many people who showed up to the call ended up purchasing. Calculated as:<br><br><strong style="color:var(--text);">gross sales ÷ showed</strong><br><br>This number measures sales team effectiveness on the call. If the % is low, the problem is not volume or follow-up — it's the call itself.<br><br><strong style="color:var(--text);">Why 45%:</strong> real historical average from the last 14 months.</div>
+        </div>
 
-      <div class="chart-card">
-        <div class="chart-title">Close rate % por mes</div>
-        <div class="chart-wrap" style="height:180px"><canvas id="cClose"></canvas></div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
+          <div style="font-size:13px;font-weight:500;color:var(--danger);margin-bottom:8px;">Refunds — target ≤ 2/month</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Counts sales that were refunded, using the <strong style="color:var(--text);">sale date</strong> (not the refund date) so everything stays within the same month.<br><br>The historical average is <strong style="color:var(--text);">1.4 refunds/month</strong>. Having 1 or 2 is normal. The alert triggers at 3 or more — that indicates a pattern worth reviewing.<br><br>The worst month recorded was October 2025 with 5 refunds.</div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
+          <div style="font-size:13px;font-weight:500;color:var(--green);margin-bottom:8px;">Net Sales — target 17/month</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">This is the final number that matters. Calculated as:<br><br><strong style="color:var(--text);">gross sales − refunds</strong><br><br>Gross sales include everyone who purchased that month, even if they later requested a refund. Net sales is what was actually collected.<br><br><strong style="color:var(--text);">Why 17:</strong> it's the monthly goal set by the team. To get there you need the full funnel working: 62 booked → 38 showed → 17 sales.</div>
+        </div>
+
       </div>
     </div>
   </main>
@@ -349,18 +354,16 @@
 
 <script>
 const SHEET_ID = '1ctM6K8hQfh73bi7f-MtXkqW3BaPxU73NZf8xPJQUEOc';
-const TARGET_BOOKED = 38;
-const TARGET_SALES = 17;
-const TARGET_SHOW = 75;
-const TARGET_CANCEL = 15;
+const TARGET_BOOKED = 62;
+const TARGET_SALES  = 17;
+const TARGET_SHOW   = 80;
+const TARGET_CANCEL = 18;
 
 let apiKey = localStorage.getItem('gsheets_api_key') || '';
 let charts = {};
+let globalMonthly = {};
 
-if (apiKey) {
-  showLoading();
-  loadData();
-}
+if (apiKey) { showLoading(); loadData(); }
 
 function connect() {
   const input = document.getElementById('api-key-input').value.trim();
@@ -381,14 +384,12 @@ function showLoading() {
 async function loadData() {
   document.getElementById('loading').style.display = 'flex';
   document.getElementById('dashboard').style.display = 'none';
-
   try {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/A:Z?key=${apiKey}`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Leads%20applied!A:Z?key=${apiKey}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error('API error ' + res.status);
     const json = await res.json();
-    const rows = json.values;
-    processData(rows);
+    processData(json.values);
   } catch(e) {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('setup-screen').style.display = 'flex';
@@ -400,10 +401,8 @@ async function loadData() {
 
 function parseDate(str) {
   if (!str) return null;
-  // Try M/D/YYYY
   let m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (m) return new Date(+m[3], +m[1]-1, +m[2]);
-  // Try Month D, YYYY
   m = str.match(/^(\w+)\s+(\d{1,2}),\s*(\d{4})$/);
   if (m) {
     const months = {january:0,february:1,march:2,april:3,may:4,june:5,july:6,august:7,september:8,october:9,november:10,december:11};
@@ -416,188 +415,314 @@ function parseDate(str) {
 function processData(rows) {
   if (!rows || rows.length < 2) return;
   const headers = rows[0].map(h => h.trim().toLowerCase());
-
-  const col = name => headers.findIndex(h => h.includes(name));
+  const col = name => headers.findIndex(h => h.trim().toLowerCase() === name.toLowerCase());
   const iApp    = col('application date');
-  const iBooked = col('booked call');
-  const iStatus = col('call status');
-  const iSale   = col('end in sale');
+  const iBooked = col('booked call (qualified)');
+  const iStatus = col('call status show vs no-show');
+  const iSale   = col('end in sale yes/no');
+  const iRefund = col('refund status');
+  const iSource = col('last attribution');
 
   const monthly = {};
-
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
-    const bookedVal = (r[iBooked] || '').trim().toLowerCase();
-    if (bookedVal !== 'yes') continue;
-
+    if (!r || (r[iBooked] || '').trim().toLowerCase() !== 'yes') continue;
     const dt = parseDate((r[iApp] || '').trim());
     if (!dt) continue;
     const key = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;
-
-    if (!monthly[key]) monthly[key] = {booked:0,showed:0,noshow:0,cancelled:0,sales:0};
+    if (!monthly[key]) monthly[key] = {booked:0,showed:0,noshow:0,cancelled:0,sales:0,refunds:0,sources:{}};
+    const rawSrc = (r[iSource] || '').trim().toLowerCase();
+    let src = 'Other';
+    if (rawSrc.includes('instagram')) src = 'Instagram';
+    else if (rawSrc.includes('direct')) src = 'Direct Traffic';
+    else if (rawSrc.includes('setter')) src = 'Setter';
+    else if (rawSrc.includes('podcast')) src = 'Podcast';
+    else if (rawSrc.includes('organic')) src = 'Organic Search';
+    else if (rawSrc.includes('email') || rawSrc.includes('lead magnet')) src = 'Email / Lead Magnet';
+    else if (rawSrc.includes('meta') || rawSrc.includes('facebook')) src = 'Meta / Facebook';
+    else if (rawSrc.includes('joey')) src = 'Joey Atlas';
+    else if (rawSrc.includes('youtube')) src = 'YouTube';
+    else if (rawSrc.includes('linkedin')) src = 'LinkedIn';
+    else if (rawSrc.includes('referral') || rawSrc.includes('referal')) src = 'Referral';
+    if (!monthly[key].sources[src]) monthly[key].sources[src] = {booked:0,showed:0,noshow:0,sales:0};
+    monthly[key].sources[src].booked++;
     monthly[key].booked++;
-
     const cs = (r[iStatus] || '').trim().toLowerCase();
-    if (cs === 'showed') monthly[key].showed++;
-    else if (cs === 'no show') monthly[key].noshow++;
+    if (cs === 'showed') { monthly[key].showed++; monthly[key].sources[src].showed++; }
+    else if (cs === 'no show') { monthly[key].noshow++; monthly[key].sources[src].noshow++; }
     else if (cs === 'cancelled') monthly[key].cancelled++;
-
-    if ((r[iSale] || '').trim().toLowerCase() === 'yes') monthly[key].sales++;
+    if ((r[iSale] || '').trim().toLowerCase() === 'yes') { monthly[key].sales++; monthly[key].sources[src].sales++; }
+    if ((r[iRefund] || '').trim().toUpperCase() === 'TRUE') monthly[key].refunds++;
   }
-
+  globalMonthly = monthly;
   renderDashboard(monthly);
 }
 
-function renderDashboard(monthly) {
-  const keys = Object.keys(monthly).sort().filter(k => k >= '2024-12');
-  const monthNames = k => {
-    const [y,m] = k.split('-');
-    const names = ['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-    return names[+m] + ' ' + y.slice(2);
-  };
+function monthLabel(k) {
+  const [y, mo] = k.split('-');
+  const names = ['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return names[+mo] + ' ' + y.slice(2);
+}
 
-  // Current month
-  const now = new Date();
-  const curKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const cur = monthly[curKey] || {booked:0,showed:0,noshow:0,cancelled:0,sales:0};
+function onMonthChange() {
+  const key = document.getElementById('month-selector').value;
+  updateKPIs(key);
+  updateFunnel(key);
+  updateRecommendations(key);
+  updateSourceTable(key);
+}
 
-  // KPIs
-  const showRate = cur.showed + cur.noshow > 0 ? Math.round(cur.showed / (cur.showed + cur.noshow) * 100) : 0;
+function updateKPIs(curKey) {
+  const cur = globalMonthly[curKey] || {booked:0,showed:0,noshow:0,cancelled:0,sales:0};
+  const showRate   = cur.showed + cur.noshow > 0 ? Math.round(cur.showed / (cur.showed + cur.noshow) * 100) : 0;
   const cancelRate = cur.booked > 0 ? Math.round(cur.cancelled / cur.booked * 100) : 0;
-  const closeRate = cur.showed > 0 ? Math.round(cur.sales / cur.showed * 100) : 0;
+  const closeRate  = cur.showed > 0 ? Math.round(cur.sales / cur.showed * 100) : 0;
 
-  document.getElementById('kpi-booked').textContent = cur.booked;
-  document.getElementById('kpi-show').textContent = showRate + '%';
-  document.getElementById('kpi-cancel').textContent = cancelRate + '%';
-  document.getElementById('kpi-sales').textContent = cur.sales;
+  const netSales = cur.sales - (cur.refunds || 0);
 
-  const bookedPct = Math.min(Math.round(cur.booked / TARGET_BOOKED * 100), 100);
-  const salesPct  = Math.min(Math.round(cur.sales  / TARGET_SALES  * 100), 100);
-  document.getElementById('bar-booked').style.width = bookedPct + '%';
-  document.getElementById('bar-sales').style.width  = salesPct  + '%';
-  document.getElementById('kpi-booked-pct').textContent = bookedPct + '%';
-  document.getElementById('kpi-sales-pct').textContent  = salesPct  + '%';
+  document.getElementById('kpi-booked').textContent    = cur.booked;
+  document.getElementById('kpi-show').textContent      = '(' + showRate + '%)';
+  document.getElementById('kpi-show-abs').textContent  = cur.showed;
+  document.getElementById('kpi-cancel').textContent      = '(' + cancelRate + '%)';
+  document.getElementById('kpi-cancel-abs').textContent  = cur.cancelled;
+  document.getElementById('kpi-close').textContent     = '(' + closeRate + '%)';
+  document.getElementById('kpi-close-abs').textContent = cur.sales;
+  document.getElementById('kpi-refunds').textContent   = cur.refunds || 0;
+  document.getElementById('kpi-net-sales').textContent = netSales;
 
-  // Badges
-  const setBadge = (id, val, goodThresh, warnThresh, invert) => {
+  const bookedPct   = Math.min(Math.round(cur.booked  / TARGET_BOOKED * 100), 100);
+  const netSalePct  = Math.min(Math.round(netSales    / TARGET_SALES  * 100), 100);
+  const showPct     = Math.min(Math.round(showRate    / 75            * 100), 100);
+  const closePct2   = Math.min(Math.round(closeRate   / 45            * 100), 100);
+  document.getElementById('bar-booked').style.width    = bookedPct  + '%';
+  document.getElementById('bar-net-sales').style.width = netSalePct + '%';
+  document.getElementById('bar-show').style.width      = showPct    + '%';
+  document.getElementById('bar-close').style.width     = closePct2  + '%';
+  document.getElementById('kpi-booked-pct').textContent    = bookedPct  + '%';
+  document.getElementById('kpi-net-sales-pct').textContent = netSalePct + '%';
+  document.getElementById('kpi-show-pct').textContent      = showPct    + '%';
+  document.getElementById('kpi-close-pct').textContent     = closePct2  + '%';
+
+  const setBadge = (id, val, good, warn, invert) => {
     const el = document.getElementById(id);
     let cls, text;
     if (!invert) {
-      cls = val >= goodThresh ? 'badge-green' : val >= warnThresh ? 'badge-warn' : 'badge-red';
-      text = val >= goodThresh ? '✓ En target' : val >= warnThresh ? '⚠ Cerca' : '✗ Bajo target';
+      cls  = val >= good ? 'badge-green' : val >= warn ? 'badge-warn' : 'badge-red';
+      text = val >= good ? '✓ On target' : val >= warn ? '⚠ Close' : '✗ Below target';
     } else {
-      cls = val <= goodThresh ? 'badge-green' : val <= warnThresh ? 'badge-warn' : 'badge-red';
-      text = val <= goodThresh ? '✓ En target' : val <= warnThresh ? '⚠ Cerca' : '✗ Alto';
+      cls  = val <= good ? 'badge-green' : val <= warn ? 'badge-warn' : 'badge-red';
+      text = val <= good ? '✓ On target' : val <= warn ? '⚠ Close' : '✗ High';
     }
     el.className = 'kpi-badge ' + cls;
     el.textContent = text;
   };
-  setBadge('badge-show',   showRate,   TARGET_SHOW,   65,  false);
-  setBadge('badge-cancel', cancelRate, TARGET_CANCEL, 25,  true);
+  setBadge('badge-show',   showRate,   TARGET_SHOW,   70, false);
+  setBadge('badge-cancel', cancelRate, TARGET_CANCEL, 28, true);
+  setBadge('badge-close',  closeRate,  45,            35, false);
 
-  // Alerts
+  const label = monthLabel(curKey).toUpperCase();
   const alerts = [];
-  if (cur.booked < 30) alerts.push({ color: '#f05a4a', text: `<strong>Volumen bajo:</strong> Solo ${cur.booked} bookeados este mes. Target es 38.` });
-  if (cancelRate > 25) alerts.push({ color: '#f0a84a', text: `<strong>Cancelaciones altas:</strong> ${cancelRate}% de los bookeados están cancelando. Revisar seguimiento pre-llamada.` });
-  if (showRate < 65)   alerts.push({ color: '#f05a4a', text: `<strong>Show rate crítico:</strong> Solo ${showRate}% están apareciendo a la llamada.` });
-  if (closeRate >= 45) alerts.push({ color: '#4af09a', text: `<strong>Close rate sólido:</strong> ${closeRate}% de los que muestran están cerrando. El problema no está en ventas.` });
+  if (cur.booked < 46)  alerts.push({color:'#f05a4a', text:`<strong>Volumen bajo:</strong> Only ${cur.booked} booked in ${label}. Target is 62.`});
+  if (cancelRate > 28)  alerts.push({color:'#f0a84a', text:`<strong>Cancelaciones altas:</strong> ${cancelRate}% are cancelling in ${label}.`});
+  if (showRate < 70)    alerts.push({color:'#f05a4a', text:`<strong>Show rate crítico:</strong> Only ${showRate}% showed up in ${label}.`});
+  if (closeRate >= 45)  alerts.push({color:'#4af09a', text:`<strong>Strong close rate:</strong> ${closeRate}% of those who showed closed in ${label}.`});
+  if ((cur.refunds||0) >= 3) alerts.push({color:'#f05a4a', text:`<strong>Refunds altos en ${label}:</strong> ${cur.refunds} refunded sales. Net Sales: ${netSales}.`});
+  document.getElementById('alerts-container').innerHTML = alerts.map(a =>
+    `<div class="alert"><div class="alert-dot" style="background:${a.color}"></div><div class="alert-text">${a.text}</div></div>`
+  ).join('');
+}
 
-  const ac = document.getElementById('alerts-container');
-  ac.innerHTML = alerts.map(a => `
-    <div class="alert">
-      <div class="alert-dot" style="background:${a.color}"></div>
-      <div class="alert-text">${a.text}</div>
+function updateFunnel(key) {
+  const m = globalMonthly[key] || {booked:0,showed:0,noshow:0,cancelled:0,sales:0};
+  const steps = [
+    {label:'Booked', val:m.booked, color:'#4a8ff0', pct:null},
+    {label:'Showed',    val:m.showed, color:'#c8f04a', pct:m.booked ? Math.round(m.showed/m.booked*100)+'%':'—'},
+    {label:'Sales',    val:m.sales,  color:'#4af09a', pct:m.showed ? Math.round(m.sales/m.showed*100)+'%':'—'},
+  ];
+  const showRateFunnel  = m.showed + m.noshow > 0 ? Math.round(m.showed / (m.showed + m.noshow) * 100) : 0;
+  const closeRateFunnel = m.showed > 0 ? Math.round(m.sales / m.showed * 100) : 0;
+  const funnelSteps = [
+    {label:'Booked', val:m.booked, color:'#4a8ff0', right: `<span style="font-size:14px;font-weight:500;color:var(--text);">${m.booked}</span>`},
+    {label:'Showed',    val:m.showed, color:'#c8f04a', right: `<span style="font-size:14px;font-weight:500;color:var(--text);">${m.showed}</span>&nbsp;<span style="font-size:11px;color:#7a7a85;">(${showRateFunnel}%)</span>`},
+    {label:'Sales',    val:m.sales,  color:'#4af09a', right: `<span style="font-size:14px;font-weight:500;color:var(--text);">${m.sales}</span>&nbsp;<span style="font-size:11px;color:#7a7a85;">(${closeRateFunnel}%)</span>`},
+  ];
+  document.getElementById('funnel-container').innerHTML =
+    `<div style="margin-bottom:0.5rem;font-size:11px;color:#7a7a85;text-transform:uppercase;letter-spacing:0.06em;">${monthLabel(key)}</div>` +
+    funnelSteps.map(s => `<div class="funnel-row">
+      <div class="funnel-label">${s.label}</div>
+      <div class="funnel-bar-wrap"><div class="funnel-bar" style="width:${m.booked ? Math.round(s.val/m.booked*100) : 0}%;background:${s.color}22;color:${s.color};">&nbsp;</div></div>
+      <div class="funnel-rate" style="width:80px;text-align:right;">${s.right}</div>
     </div>`).join('');
+}
 
-  // Chart data
-  const labels    = keys.map(monthNames);
+
+function updateRecommendations(curKey) {
+  const cur = globalMonthly[curKey] || {booked:0,showed:0,noshow:0,cancelled:0,sales:0};
+  const showRate   = cur.showed + cur.noshow > 0 ? Math.round(cur.showed / (cur.showed + cur.noshow) * 100) : 0;
+  const cancelRate = cur.booked > 0 ? Math.round(cur.cancelled / cur.booked * 100) : 0;
+  const closeRate  = cur.showed > 0 ? Math.round(cur.sales / cur.showed * 100) : 0;
+
+  const issues = [];
+  if (cur.booked < 46)    issues.push({color:'var(--danger)', icon:'↓', title:'Low volume', text:"You don't have enough booked calls this month. Focus on increasing lead generation — review which channels are active and push for more outreach."});
+  if (cancelRate > 28)    issues.push({color:'var(--warn)',   icon:'✕', title:'High cancellations', text:'Too many people are cancelling before the call. Strengthen commitment at booking and add follow-up reminders between booking and the call date.'});
+  if (showRate < 70)      issues.push({color:'var(--warn)',   icon:'↓', title:'Low show rate', text:'People are booking but not showing up. Improve pre-call follow-up — send reminders 24h and 1h before the call.'});
+  if (closeRate < 35)     issues.push({color:'var(--danger)', icon:'↓', title:'Low close rate', text:'People are showing up but not buying. The problem is on the sales call — review the pitch, how objections are handled, and the offer.'});
+
+  const container = document.getElementById('recommendations-section');
+  if (issues.length === 0) {
+    container.innerHTML = `<div style="background:rgba(74,240,154,0.06);border:1px solid rgba(74,240,154,0.2);border-radius:var(--radius);padding:1rem 1.25rem;display:flex;align-items:center;gap:10px;">
+      <div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;"></div>
+      <div style="font-size:13px;color:var(--muted);"><strong style="color:var(--text);">Everything on track.</strong> All metrics are within target. Stay consistent and keep pushing volume.</div>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div style="font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Recommendations</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;">
+      ${issues.map(i => `<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid ${i.color};border-radius:var(--radius);padding:1rem 1.25rem;">
+        <div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:4px;">${i.icon} ${i.title}</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6;">${i.text}</div>
+      </div>`).join('')}
+    </div>`;
+}
+
+function updateSourceTable(curKey) {
+  const keys = Object.keys(globalMonthly).sort();
+  const curIdx = keys.indexOf(curKey);
+  const last6 = keys.slice(Math.max(0, curIdx - 5), curIdx + 1);
+
+  const sourceTotals = {};
+  for (const k of last6) {
+    const sources = globalMonthly[k].sources || {};
+    for (const [src, d] of Object.entries(sources)) {
+      if (!sourceTotals[src]) sourceTotals[src] = {booked:0,showed:0,sales:0};
+      sourceTotals[src].booked += d.booked;
+      sourceTotals[src].showed += d.showed || 0;
+      sourceTotals[src].sales  += d.sales  || 0;
+    }
+  }
+
+  const rows = Object.entries(sourceTotals)
+    .filter(([,d]) => d.booked >= 2)
+    .sort((a,b) => b[1].booked - a[1].booked);
+
+  const maxBooked = Math.max(...rows.map(([,d]) => d.booked), 1);
+
+  const closeColor = (pct) => pct >= 45 ? 'var(--green)' : pct >= 35 ? 'var(--warn)' : 'var(--danger)';
+  const bookedColor = (n) => n >= 10 ? 'var(--green)' : n >= 5 ? 'var(--warn)' : 'var(--danger)';
+
+  const html = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <thead>
+      <tr style="border-bottom:1px solid var(--border);">
+        <th style="text-align:left;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Source</th>
+        <th style="text-align:left;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;min-width:140px;">Volume</th>
+        <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Booked</th>
+        <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Showed</th>
+        <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Sales</th>
+        <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Close rate</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows.map(([src, d], i) => {
+        const closeRate = d.showed > 0 ? Math.round(d.sales / d.showed * 100) : 0;
+        const barW = Math.round(d.booked / maxBooked * 100);
+        const border = i < rows.length - 1 ? 'border-bottom:1px solid var(--border);' : '';
+        return `<tr style="${border}">
+          <td style="padding:10px 16px;font-weight:500;">${src}</td>
+          <td style="padding:10px 16px;">
+            <div style="background:rgba(255,255,255,0.05);border-radius:3px;height:6px;width:100%;">
+              <div style="background:var(--accent2);border-radius:3px;height:6px;width:${barW}%;"></div>
+            </div>
+          </td>
+          <td style="padding:10px 16px;text-align:center;font-family:var(--mono);color:${bookedColor(d.booked)};">${d.booked}</td>
+          <td style="padding:10px 16px;text-align:center;font-family:var(--mono);">${d.showed}</td>
+          <td style="padding:10px 16px;text-align:center;font-family:var(--mono);">${d.sales}</td>
+          <td style="padding:10px 16px;text-align:center;font-family:var(--mono);font-weight:500;color:${closeRate > 0 ? closeColor(closeRate) : 'var(--muted)'};">${closeRate > 0 ? closeRate + '%' : '—'}</td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>`;
+
+  document.getElementById('source-table-container').innerHTML = html;
+}
+
+function renderDashboard(monthly) {
+  const keys = Object.keys(monthly).sort().filter(k => k >= '2024-12');
+
+  // Populate month selector
+  const sel = document.getElementById('month-selector');
+  sel.innerHTML = '';
+  [...keys].reverse().forEach(k => {
+    const opt = document.createElement('option');
+    opt.value = k;
+    opt.textContent = monthLabel(k).toUpperCase();
+    sel.appendChild(opt);
+  });
+
+  // Default to current month or most recent
+  const now = new Date();
+  const curKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  sel.value = keys.includes(curKey) ? curKey : keys[keys.length - 1];
+
+  updateKPIs(sel.value);
+  updateFunnel(sel.value);
+  updateRecommendations(sel.value);
+  updateSourceTable(sel.value);
+
+  // Charts (always full history)
+  const labels    = keys.map(monthLabel);
   const booked    = keys.map(k => monthly[k].booked);
   const showed    = keys.map(k => monthly[k].showed);
   const sales     = keys.map(k => monthly[k].sales);
-  const noshowPct = keys.map(k => {
-    const d = monthly[k].showed + monthly[k].noshow;
-    return d ? Math.round(monthly[k].noshow / d * 100) : 0;
-  });
-  const cancelPct = keys.map(k => monthly[k].booked ? Math.round(monthly[k].cancelled / monthly[k].booked * 100) : 0);
-  const closePct  = keys.map(k => monthly[k].showed ? Math.round(monthly[k].sales / monthly[k].showed * 100) : 0);
+  const noshowPct = keys.map(k => { const d = monthly[k].showed + monthly[k].noshow; return d ? Math.round(monthly[k].noshow/d*100) : 0; });
+  const cancelPct = keys.map(k => monthly[k].booked ? Math.round(monthly[k].cancelled/monthly[k].booked*100) : 0);
+  const closePct  = keys.map(k => monthly[k].showed ? Math.round(monthly[k].sales/monthly[k].showed*100) : 0);
 
-  const tickOpts = { color: '#7a7a85', font: { size: 10, family: "'DM Mono', monospace" }, autoSkip: false, maxRotation: 45 };
-  const gridOpts = { color: 'rgba(255,255,255,0.05)' };
+  const tickOpts = {color:'#7a7a85', font:{size:10, family:"'DM Mono', monospace"}, autoSkip:false, maxRotation:45};
+  const gridOpts = {color:'rgba(255,255,255,0.05)'};
+  const destroy  = id => { if (charts[id]) { charts[id].destroy(); delete charts[id]; } };
 
-  const destroyChart = id => { if (charts[id]) { charts[id].destroy(); delete charts[id]; } };
-
-  // Volumen chart
-  destroyChart('vol');
+  destroy('vol');
   charts.vol = new Chart(document.getElementById('cVolumen'), {
     type: 'bar',
     data: { labels, datasets: [
-      { label: 'Bookearon', data: booked, backgroundColor: '#4a8ff0', borderRadius: 3 },
-      { label: 'Showed',    data: showed, backgroundColor: '#c8f04a', borderRadius: 3 },
-      { label: 'Ventas',    data: sales,  backgroundColor: '#4af09a', borderRadius: 3 }
+      {label:'Booked', data:booked, backgroundColor:'#4a8ff0', borderRadius:3},
+      {label:'Showed',    data:showed, backgroundColor:'#c8f04a', borderRadius:3},
+      {label:'Sales',    data:sales,  backgroundColor:'#4af09a', borderRadius:3}
     ]},
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-      scales: { x: { ticks: tickOpts, grid: gridOpts }, y: { ticks: { ...tickOpts, autoSkip: true }, grid: gridOpts, beginAtZero: true } } }
+    options: {responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{x:{ticks:tickOpts, grid:gridOpts}, y:{ticks:{...tickOpts, autoSkip:true}, grid:gridOpts, beginAtZero:true}}}
   });
 
-  // Funnel last 3 months
-  const last3 = keys.slice(-3);
-  const funnelColors = ['#4a8ff0','#c8f04a','#4af09a','#f05a4a'];
-  const funnelHTML = last3.map(k => {
-    const m = monthly[k];
-    const maxB = Math.max(...last3.map(x => monthly[x].booked), 1);
-    const cr = m.showed ? Math.round(m.sales/m.showed*100) : 0;
-    const steps = [
-      { label: 'Bookearon', val: m.booked,    color: '#4a8ff0', pct: null },
-      { label: 'Showed',    val: m.showed,    color: '#c8f04a', pct: m.booked ? Math.round(m.showed/m.booked*100)+'%' : '—' },
-      { label: 'Ventas',    val: m.sales,     color: '#4af09a', pct: m.showed ? cr+'%' : '—' },
-    ];
-    return `<div style="margin-bottom:1.5rem;">
-      <div style="font-size:11px;color:#7a7a85;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">${monthNames(k)}</div>
-      ${steps.map(s => `
-        <div class="funnel-row">
-          <div class="funnel-label">${s.label}</div>
-          <div class="funnel-bar-wrap">
-            <div class="funnel-bar" style="width:${Math.round(s.val/maxB*100)}%;background:${s.color}22;color:${s.color};">${s.val}</div>
-          </div>
-          <div class="funnel-rate">${s.pct || ''}</div>
-        </div>`).join('')}
-    </div>`;
-  }).join('');
-  document.getElementById('funnel-container').innerHTML = funnelHTML;
-
-  // No-show chart
-  destroyChart('ns');
+  destroy('ns');
   charts.ns = new Chart(document.getElementById('cNoshow'), {
-    type: 'line',
-    data: { labels, datasets: [{ data: noshowPct, borderColor: '#f05a4a', backgroundColor: 'rgba(240,90,74,0.08)', fill: true, tension: 0.3, pointRadius: 3, pointBackgroundColor: '#f05a4a' }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-      scales: { x: { ticks: tickOpts, grid: gridOpts }, y: { ticks: { ...tickOpts, autoSkip: true, callback: v => v+'%' }, grid: gridOpts, beginAtZero: true } } }
+    type:'line',
+    data:{labels, datasets:[{data:noshowPct, borderColor:'#f05a4a', backgroundColor:'rgba(240,90,74,0.08)', fill:true, tension:0.3, pointRadius:3, pointBackgroundColor:'#f05a4a'}]},
+    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{x:{ticks:tickOpts, grid:gridOpts}, y:{ticks:{...tickOpts, autoSkip:true, callback:v=>v+'%'}, grid:gridOpts, beginAtZero:true}}}
   });
 
-  // Cancel chart
-  destroyChart('cc');
+  destroy('cc');
   charts.cc = new Chart(document.getElementById('cCancel'), {
-    type: 'bar',
-    data: { labels, datasets: [{ data: cancelPct, backgroundColor: '#f0a84a55', borderColor: '#f0a84a', borderWidth: 1, borderRadius: 3 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-      scales: { x: { ticks: tickOpts, grid: gridOpts }, y: { ticks: { ...tickOpts, autoSkip: true, callback: v => v+'%' }, grid: gridOpts, beginAtZero: true } } }
+    type:'bar',
+    data:{labels, datasets:[{data:cancelPct, backgroundColor:'#f0a84a55', borderColor:'#f0a84a', borderWidth:1, borderRadius:3}]},
+    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{x:{ticks:tickOpts, grid:gridOpts}, y:{ticks:{...tickOpts, autoSkip:true, callback:v=>v+'%'}, grid:gridOpts, beginAtZero:true}}}
   });
 
-  // Close rate chart
-  destroyChart('cl');
+  destroy('cl');
   charts.cl = new Chart(document.getElementById('cClose'), {
-    type: 'line',
-    data: { labels, datasets: [
-      { data: closePct, borderColor: '#4af09a', backgroundColor: 'rgba(74,240,154,0.08)', fill: true, tension: 0.3, pointRadius: 3, pointBackgroundColor: '#4af09a' },
-      { data: keys.map(() => 45), borderColor: 'rgba(255,255,255,0.15)', borderDash: [4,4], pointRadius: 0, fill: false, label: 'Target 45%' }
+    type:'line',
+    data:{labels, datasets:[
+      {data:closePct, borderColor:'#4af09a', backgroundColor:'rgba(74,240,154,0.08)', fill:true, tension:0.3, pointRadius:3, pointBackgroundColor:'#4af09a'},
+      {data:keys.map(()=>45), borderColor:'rgba(255,255,255,0.15)', borderDash:[4,4], pointRadius:0, fill:false}
     ]},
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-      scales: { x: { ticks: tickOpts, grid: gridOpts }, y: { ticks: { ...tickOpts, autoSkip: true, callback: v => v+'%' }, grid: gridOpts, beginAtZero: true } } }
+    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{x:{ticks:tickOpts, grid:gridOpts}, y:{ticks:{...tickOpts, autoSkip:true, callback:v=>v+'%'}, grid:gridOpts, beginAtZero:true}}}
   });
 
-  // Update time
-  document.getElementById('last-updated').textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es', {hour:'2-digit',minute:'2-digit'});
-
+  document.getElementById('last-updated').textContent = 'Updated: ' + new Date().toLocaleTimeString('en', {hour:'2-digit', minute:'2-digit'});
   document.getElementById('loading').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
 }
