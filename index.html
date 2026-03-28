@@ -311,6 +311,71 @@
     </div>
 
 
+    <!-- How to Use -->
+    <div style="margin-top:2.5rem;padding-top:2rem;border-top:1px solid var(--border);">
+      <div style="font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1.5rem;">How to use this dashboard</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;grid-column:1/-1;">
+          <div style="font-size:13px;font-weight:500;color:var(--accent);margin-bottom:10px;">The one rule: always start with volume</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">Before looking at any other metric, check <strong style="color:var(--text);">Booked Calls</strong>. If you don't have enough people entering the funnel, nothing else matters. There's no point optimizing the sales call if only 20 people booked this month. Volume first, everything else second.</div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
+          <div style="font-size:13px;font-weight:500;color:var(--accent2);margin-bottom:10px;">Weekly check-in (5 minutes)</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+            Every week, open the dashboard and ask three questions:<br><br>
+            <strong style="color:var(--text);">1.</strong> Do I have ~16 booked calls this week?<br>
+            <strong style="color:var(--text);">2.</strong> Are people showing up? (show rate ≥ 80%)<br>
+            <strong style="color:var(--text);">3.</strong> Are people buying? (close rate ≥ 45%)<br><br>
+            If #1 is off, stop — fix volume before anything else. If #1 is fine, move to #2. If #1 and #2 are fine, look at #3.
+          </div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
+          <div style="font-size:13px;font-weight:500;color:var(--warn);margin-bottom:10px;">Monthly review (15 minutes)</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+            At the end of each month:<br><br>
+            <strong style="color:var(--text);">1.</strong> Select the month in the dropdown and read the Recommendations section — it tells you exactly what to focus on next month.<br><br>
+            <strong style="color:var(--text);">2.</strong> Check the Source Performance table — which channels brought the most booked calls? Which had the best close rate? Double down on what's working.<br><br>
+            <strong style="color:var(--text);">3.</strong> Compare to last month — are numbers trending up or down?
+          </div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
+          <div style="font-size:13px;font-weight:500;color:var(--danger);margin-bottom:10px;">When something looks off</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+            The dashboard tells you <em>where</em> the problem is, not <em>why</em>. Use it as a starting point:<br><br>
+            <strong style="color:var(--text);">Low volume</strong> → Which channels slowed down? What was different in peak months?<br><br>
+            <strong style="color:var(--text);">High cancellations</strong> → Is there enough follow-up between booking and the call? Are leads qualified enough?<br><br>
+            <strong style="color:var(--text);">Low show rate</strong> → Are reminders being sent 24h and 1h before the call?<br><br>
+            <strong style="color:var(--text);">Low close rate</strong> → Is the sales call script being followed? Are objections being handled well?
+          </div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
+          <div style="font-size:13px;font-weight:500;color:var(--green);margin-bottom:10px;">How to read the Source Performance table</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+            The table shows the last 6 months of data for each channel. Focus on two things:<br><br>
+            <strong style="color:var(--text);">Volume (Booked column)</strong> — green means the channel is active and bringing leads. Red means it needs attention.<br><br>
+            <strong style="color:var(--text);">Quality (Close Rate column)</strong> — a channel can bring lots of leads but if close rate is low, those leads aren't converting. The best channels have both high volume AND high close rate.
+          </div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
+          <div style="font-size:13px;font-weight:500;color:var(--muted);margin-bottom:10px;">Keeping the data clean</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+            This dashboard is only as good as the data in the Google Sheet. A few things to keep in mind:<br><br>
+            <strong style="color:var(--text);">Update the sheet consistently</strong> — make sure Call Status (showed / no show / cancelled) and End in Sale (yes/no) are filled in promptly after each call.<br><br>
+            <strong style="color:var(--text);">Mark refunds on the sale date</strong> — the Refund Status column should be updated as TRUE when a refund is processed, so it counts in the right month.<br><br>
+            <strong style="color:var(--text);">Refresh the dashboard</strong> after updating the sheet using the ↻ Refresh button in the top right.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
     <!-- Knowledge Base -->
     <div style="margin-top:2.5rem;padding-top:2rem;border-top:1px solid var(--border);">
       <div style="font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1.5rem;">Knowledge base — where each number comes from</div>
@@ -522,11 +587,11 @@ function updateKPIs(curKey) {
 
   const label = monthLabel(curKey).toUpperCase();
   const alerts = [];
-  if (cur.booked < 46)  alerts.push({color:'#f05a4a', text:`<strong>Volumen bajo:</strong> Only ${cur.booked} booked in ${label}. Target is 62.`});
-  if (cancelRate > 28)  alerts.push({color:'#f0a84a', text:`<strong>Cancelaciones altas:</strong> ${cancelRate}% are cancelling in ${label}.`});
-  if (showRate < 70)    alerts.push({color:'#f05a4a', text:`<strong>Show rate crítico:</strong> Only ${showRate}% showed up in ${label}.`});
+  if (cur.booked < 46)  alerts.push({color:'#f05a4a', text:`<strong>Low volume:</strong> Only ${cur.booked} booked in ${label}. Target is 62.`});
+  if (cancelRate > 28)  alerts.push({color:'#f0a84a', text:`<strong>High cancellations:</strong> ${cancelRate}% are cancelling in ${label}.`});
+  if (showRate < 70)    alerts.push({color:'#f05a4a', text:`<strong>Low show rate:</strong> Only ${showRate}% showed up in ${label}.`});
   if (closeRate >= 45)  alerts.push({color:'#4af09a', text:`<strong>Strong close rate:</strong> ${closeRate}% of those who showed closed in ${label}.`});
-  if ((cur.refunds||0) >= 3) alerts.push({color:'#f05a4a', text:`<strong>Refunds altos en ${label}:</strong> ${cur.refunds} refunded sales. Net Sales: ${netSales}.`});
+  if ((cur.refunds||0) >= 3) alerts.push({color:'#f05a4a', text:`<strong>High refunds in ${label}:</strong> ${cur.refunds} refunded sales. Net Sales: ${netSales}.`});
   document.getElementById('alerts-container').innerHTML = alerts.map(a =>
     `<div class="alert"><div class="alert-dot" style="background:${a.color}"></div><div class="alert-text">${a.text}</div></div>`
   ).join('');
