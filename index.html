@@ -493,10 +493,15 @@ function processData(rows) {
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
     if (!r || (r[iBooked] || '').trim().toLowerCase() !== 'yes') continue;
-    const dt = parseDate((r[iApp] || '').trim());
-    if (!dt) continue;
-    const key = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;
+
+    // Use call date (K) as the key for everything
+    const callDateStr = (r[iCallDate] || '').trim();
+    const callDt = parseDate(callDateStr);
+    if (!callDt) continue;
+    const key = `${callDt.getFullYear()}-${String(callDt.getMonth()+1).padStart(2,'0')}`;
+
     if (!monthly[key]) monthly[key] = {booked:0,showed:0,noshow:0,cancelled:0,sales:0,refunds:0,sources:{}};
+
     const rawSrc = (r[iSource] || '').trim().toLowerCase();
     let src = 'Other';
     if (rawSrc.includes('instagram')) src = 'Instagram';
@@ -510,26 +515,23 @@ function processData(rows) {
     else if (rawSrc.includes('youtube')) src = 'YouTube';
     else if (rawSrc.includes('linkedin')) src = 'LinkedIn';
     else if (rawSrc.includes('referral') || rawSrc.includes('referal')) src = 'Referral';
+
     if (!monthly[key].sources[src]) monthly[key].sources[src] = {booked:0,showed:0,noshow:0,sales:0};
-    monthly[key].sources[src].booked++;
+
     monthly[key].booked++;
+    monthly[key].sources[src].booked++;
+
     const cs = (r[iStatus] || '').trim().toLowerCase();
-    if (cs === 'showed') { monthly[key].showed++; monthly[key].sources[src].showed++; }
-    else if (cs === 'no show') { monthly[key].noshow++; monthly[key].sources[src].noshow++; }
-    else if (cs === 'cancelled') monthly[key].cancelled++;
-    // Sales and refunds counted by call date (column K), not application date
-    const callDateStr = (r[iCallDate] || '').trim();
-    const callDt = parseDate(callDateStr);
-    const saleKey = callDt ? `${callDt.getFullYear()}-${String(callDt.getMonth()+1).padStart(2,'0')}` : key;
+    if (cs === 'showed')    { monthly[key].showed++;    monthly[key].sources[src].showed++; }
+    else if (cs === 'no show')   { monthly[key].noshow++;    monthly[key].sources[src].noshow++; }
+    else if (cs === 'cancelled') { monthly[key].cancelled++; }
+
     if ((r[iSale] || '').trim().toLowerCase() === 'yes') {
-      if (!monthly[saleKey]) monthly[saleKey] = {booked:0,showed:0,noshow:0,cancelled:0,sales:0,refunds:0,sources:{}};
-      monthly[saleKey].sales++;
-      if (!monthly[saleKey].sources[src]) monthly[saleKey].sources[src] = {booked:0,showed:0,noshow:0,sales:0};
-      monthly[saleKey].sources[src].sales++;
+      monthly[key].sales++;
+      monthly[key].sources[src].sales++;
     }
     if ((r[iRefund] || '').trim().toUpperCase() === 'TRUE') {
-      if (!monthly[saleKey]) monthly[saleKey] = {booked:0,showed:0,noshow:0,cancelled:0,sales:0,refunds:0,sources:{}};
-      monthly[saleKey].refunds++;
+      monthly[key].refunds++;
     }
   }
   globalMonthly = monthly;
