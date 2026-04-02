@@ -481,12 +481,13 @@ function processData(rows) {
   if (!rows || rows.length < 2) return;
   const headers = rows[0].map(h => h.trim().toLowerCase());
   const col = name => headers.findIndex(h => h.trim().toLowerCase() === name.toLowerCase());
-  const iApp    = col('application date');
-  const iBooked = col('booked call (qualified)');
-  const iStatus = col('call status show vs no-show');
-  const iSale   = col('end in sale yes/no');
-  const iRefund = col('refund status');
-  const iSource = col('last attribution');
+  const iApp      = col('application date');
+  const iBooked   = col('booked call (qualified)');
+  const iStatus   = col('call status show vs no-show');
+  const iSale     = col('end in sale yes/no');
+  const iRefund   = col('refund status');
+  const iSource   = col('last attribution');
+  const iCallDate = col('sales call booked date');
 
   const monthly = {};
   for (let i = 1; i < rows.length; i++) {
@@ -516,8 +517,20 @@ function processData(rows) {
     if (cs === 'showed') { monthly[key].showed++; monthly[key].sources[src].showed++; }
     else if (cs === 'no show') { monthly[key].noshow++; monthly[key].sources[src].noshow++; }
     else if (cs === 'cancelled') monthly[key].cancelled++;
-    if ((r[iSale] || '').trim().toLowerCase() === 'yes') { monthly[key].sales++; monthly[key].sources[src].sales++; }
-    if ((r[iRefund] || '').trim().toUpperCase() === 'TRUE') monthly[key].refunds++;
+    // Sales and refunds counted by call date (column K), not application date
+    const callDateStr = (r[iCallDate] || '').trim();
+    const callDt = parseDate(callDateStr);
+    const saleKey = callDt ? `${callDt.getFullYear()}-${String(callDt.getMonth()+1).padStart(2,'0')}` : key;
+    if ((r[iSale] || '').trim().toLowerCase() === 'yes') {
+      if (!monthly[saleKey]) monthly[saleKey] = {booked:0,showed:0,noshow:0,cancelled:0,sales:0,refunds:0,sources:{}};
+      monthly[saleKey].sales++;
+      if (!monthly[saleKey].sources[src]) monthly[saleKey].sources[src] = {booked:0,showed:0,noshow:0,sales:0};
+      monthly[saleKey].sources[src].sales++;
+    }
+    if ((r[iRefund] || '').trim().toUpperCase() === 'TRUE') {
+      if (!monthly[saleKey]) monthly[saleKey] = {booked:0,showed:0,noshow:0,cancelled:0,sales:0,refunds:0,sources:{}};
+      monthly[saleKey].refunds++;
+    }
   }
   globalMonthly = monthly;
   renderDashboard(monthly);
