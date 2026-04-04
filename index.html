@@ -133,7 +133,7 @@
         <div class="kpi-meta">showed ÷ (showed + no-show)</div>
         <div class="target-bar-wrap">
           <div class="target-bar-bg"><div class="target-bar-fill" id="bar-show" style="width:0%;background:var(--warn)"></div></div>
-          <div class="target-label">Target: 80% | <span id="kpi-show-pct">—</span></div>
+          <div class="target-label">Target: 80%</div>
         </div>
         <div class="kpi-badge" id="badge-show">—</div>
       </div>
@@ -156,7 +156,7 @@
         <div class="kpi-meta">sales ÷ showed</div>
         <div class="target-bar-wrap">
           <div class="target-bar-bg"><div class="target-bar-fill" id="bar-close" style="width:0%;background:var(--accent2)"></div></div>
-          <div class="target-label">Target: 45% | <span id="kpi-close-pct">—</span></div>
+          <div class="target-label">Target: 45%</div>
         </div>
         <div class="kpi-badge" id="badge-close">—</div>
       </div>
@@ -502,19 +502,21 @@ function processData(rows) {
 
     if (!monthly[key]) monthly[key] = {booked:0,showed:0,noshow:0,cancelled:0,sales:0,refunds:0,sources:{}};
 
-    const rawSrc = (r[iSource] || '').trim().toLowerCase();
-    let src = 'Other';
-    if (rawSrc.includes('instagram')) src = 'Instagram';
-    else if (rawSrc.includes('direct')) src = 'Direct Traffic';
-    else if (rawSrc.includes('setter')) src = 'Setter';
-    else if (rawSrc.includes('podcast')) src = 'Podcast';
-    else if (rawSrc.includes('organic')) src = 'Organic Search';
-    else if (rawSrc.includes('email') || rawSrc.includes('lead magnet')) src = 'Email / Lead Magnet';
-    else if (rawSrc.includes('meta') || rawSrc.includes('facebook')) src = 'Meta / Facebook';
-    else if (rawSrc.includes('joey')) src = 'Joey Atlas';
-    else if (rawSrc.includes('youtube')) src = 'YouTube';
-    else if (rawSrc.includes('linkedin')) src = 'LinkedIn';
-    else if (rawSrc.includes('referral') || rawSrc.includes('referal')) src = 'Referral';
+    const rawSrc = (r[iSource] || '').trim();
+    const rawSrcLower = rawSrc.toLowerCase();
+    let src = rawSrc || 'Other'; // default: use the actual value from the sheet
+    if (!rawSrc) src = 'Other';
+    else if (rawSrcLower.includes('instagram')) src = 'Instagram';
+    else if (rawSrcLower.includes('direct')) src = 'Direct Traffic';
+    else if (rawSrcLower.includes('setter')) src = 'Setter';
+    else if (rawSrcLower.includes('podcast')) src = 'Podcast';
+    else if (rawSrcLower.includes('organic')) src = 'Organic Search';
+    else if (rawSrcLower.includes('email') || rawSrcLower.includes('lead magnet')) src = 'Email / Lead Magnet';
+    else if (rawSrcLower.includes('meta') || rawSrcLower.includes('facebook')) src = 'Meta / Facebook';
+    else if (rawSrcLower.includes('joey')) src = 'Joey Atlas';
+    else if (rawSrcLower.includes('youtube')) src = 'YouTube';
+    else if (rawSrcLower.includes('linkedin')) src = 'LinkedIn';
+    else if (rawSrcLower.includes('referral') || rawSrcLower.includes('referal')) src = 'Referral';
 
     if (!monthly[key].sources[src]) monthly[key].sources[src] = {booked:0,showed:0,noshow:0,sales:0};
 
@@ -580,8 +582,6 @@ function updateKPIs(curKey) {
   document.getElementById('bar-close').style.width     = closePct2  + '%';
   document.getElementById('kpi-booked-pct').textContent    = bookedPct  + '%';
   document.getElementById('kpi-net-sales-pct').textContent = netSalePct + '%';
-  document.getElementById('kpi-show-pct').textContent      = showPct    + '%';
-  document.getElementById('kpi-close-pct').textContent     = closePct2  + '%';
 
   const setBadge = (id, val, good, warn, invert) => {
     const el = document.getElementById(id);
