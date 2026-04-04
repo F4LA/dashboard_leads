@@ -115,15 +115,6 @@
       <label>Month</label>
       <select id="month-selector" onchange="onMonthChange()"></select>
     </div>
-    <!-- Weekly Performance Table -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:2rem;">
-      <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-        <div style="font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Weekly breakdown — current month</div>
-        <div style="font-size:11px;color:var(--muted);">Mon–Sun | targets: ~16 booked · ≥80% show rate · ~4–5 sales</div>
-      </div>
-      <div id="weekly-table-container" style="overflow-x:auto;"></div>
-    </div>
-
     <div class="kpi-grid">
       <div class="kpi-card" style="--card-accent: var(--accent2)">
         <div class="kpi-label">Booked Calls</div>
@@ -211,6 +202,15 @@
         <div class="chart-title">Close Rate % per month</div>
         <div class="chart-wrap" style="height:180px"><canvas id="cClose"></canvas></div>
       </div>
+    </div>
+
+    <!-- Weekly Performance Table -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:2rem;">
+      <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Weekly breakdown — current month</div>
+        <div style="font-size:11px;color:var(--muted);">Mon–Sun | targets: ~16 booked · ≥80% show rate · ~4–5 sales</div>
+      </div>
+      <div id="weekly-table-container" style="overflow-x:auto;"></div>
     </div>
 
     <!-- Recommendations -->
