@@ -415,9 +415,13 @@
 
     <!-- Weekly tab -->
     <div id="tab-weekly" class="tab-content">
+      <div class="month-bar" style="margin-bottom:1.5rem;">
+        <label>Month</label>
+        <select id="month-selector-weekly" onchange="onWeeklyMonthChange()"></select>
+      </div>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:2rem;">
         <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-          <div style="font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Weekly breakdown — current month</div>
+          <div style="font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Weekly breakdown — <span id="weekly-month-label">current month</span></div>
           <div style="font-size:11px;color:var(--muted);">Mon–Sun | targets: ~16 booked · ≥80% show rate · ~4–5 sales</div>
         </div>
         <div id="weekly-table-container" style="overflow-x:auto;"></div>
@@ -425,7 +429,7 @@
       <!-- Source table in weekly tab -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-top:1.5rem;">
         <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-          <div style="font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Source performance — current month</div>
+          <div style="font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Source performance — <span id="weekly-source-month-label">current month</span></div>
           <div style="font-size:11px;color:var(--muted);">where are this month's leads coming from?</div>
         </div>
         <div id="weekly-source-container"></div>
@@ -491,6 +495,15 @@ function switchTab(name, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   btn.classList.add('active');
+}
+
+function onWeeklyMonthChange() {
+  const key = document.getElementById('month-selector-weekly').value;
+  // Sync monthly selector
+  document.getElementById('month-selector').value = key;
+  // Update weekly table and source for selected month
+  updateWeeklyTableForMonth(key);
+  updateMonthlySourceTable(key);
 }
 
 function connect() {
@@ -757,10 +770,35 @@ function getWeeksOfMonth(year, month) {
   return weeks;
 }
 
+function updateWeeklyTableForMonth(curKey) {
+  const parts = curKey.split('-');
+  const year  = parseInt(parts[0]);
+  const month = parseInt(parts[1]) - 1;
+
+  // Update labels
+  const lbl = monthLabel(curKey);
+  const wlbl = document.getElementById('weekly-month-label');
+  if (wlbl) wlbl.textContent = lbl;
+  const slbl = document.getElementById('weekly-source-month-label');
+  if (slbl) slbl.textContent = lbl;
+
+  _updateWeeklyTable(year, month);
+}
+
 function updateWeeklyTable(monthly) {
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
+  const curKey = `${year}-${String(month+1).padStart(2,'0')}`;
+  const lbl = monthLabel(curKey);
+  const wlbl = document.getElementById('weekly-month-label');
+  if (wlbl) wlbl.textContent = lbl;
+  const slbl = document.getElementById('weekly-source-month-label');
+  if (slbl) slbl.textContent = lbl;
+  _updateWeeklyTable(year, month);
+}
+
+function _updateWeeklyTable(year, month) {
   const weeks = getWeeksOfMonth(year, month);
 
   // Collect all booked rows for this month from globalMonthly raw data
@@ -796,7 +834,7 @@ function updateWeeklyTable(monthly) {
         if (r.cs === 'showed')         { w.showed++; }
         else if (r.cs === 'no show')   { w.noshow++; }
         else if (r.cs === 'cancelled') { w.cancelled++; }
-        // confirmed, follow up, empty = scheduled but not yet occurred
+        else if (r.cs === 'pending')   { w.pending++; }
         if (r.sold) w.sales++;
         break;
       }
@@ -1097,6 +1135,13 @@ function renderDashboard(monthly) {
   const now = new Date();
   const curKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   sel.value = keys.includes(curKey) ? curKey : keys[keys.length - 1];
+
+  // Populate weekly selector too
+  const wsel = document.getElementById('month-selector-weekly');
+  if (wsel) {
+    wsel.innerHTML = sel.innerHTML;
+    wsel.value = sel.value;
+  }
 
   updateKPIs(sel.value);
   updateFunnel(sel.value);
