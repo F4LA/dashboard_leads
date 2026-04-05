@@ -619,6 +619,10 @@ function processData(rows) {
       monthly[key].sources[src].sales++;
     }
     if ((r[iRefund] || '').trim().toUpperCase() === 'TRUE') {
+      if (!monthly[key].sources[src].refunds) monthly[key].sources[src].refunds = 0;
+      monthly[key].sources[src].refunds++;
+    }
+    if ((r[iRefund] || '').trim().toUpperCase() === 'TRUE') {
       monthly[key].refunds++;
     }
   }
@@ -638,7 +642,8 @@ function processData(rows) {
     window.globalWeeklyRows.push({
       callDt,
       cs: csNorm,
-      sold: (r[iSale] || '').trim().toLowerCase() === 'yes'
+      sold: (r[iSale] || '').trim().toLowerCase() === 'yes',
+      refunded: (r[iRefund] || '').trim().toUpperCase() === 'TRUE'
     });
   }
 
@@ -730,7 +735,7 @@ function updateFunnel(key) {
   const funnelSteps = [
     {label:'Booked', val:m.booked, color:'#4a8ff0', right: `<span style="font-size:14px;font-weight:500;color:var(--text);">${m.booked}</span>`},
     {label:'Showed',    val:m.showed, color:'#c8f04a', right: `<span style="font-size:14px;font-weight:500;color:var(--text);">${m.showed}</span>&nbsp;<span style="font-size:11px;color:#7a7a85;">(${showRateFunnel}%)</span>`},
-    {label:'Sales',    val:m.sales,  color:'#4af09a', right: `<span style="font-size:14px;font-weight:500;color:var(--text);">${m.sales}</span>&nbsp;<span style="font-size:11px;color:#7a7a85;">(${closeRateFunnel}%)</span>`},
+    {label:'Net Sales', val:Math.max(0,m.sales-(m.refunds||0)),  color:'#4af09a', right: `<span style="font-size:14px;font-weight:500;color:var(--text);">${Math.max(0,m.sales-(m.refunds||0))}</span>&nbsp;<span style="font-size:11px;color:#7a7a85;">(${closeRateFunnel}%)</span>`},
   ];
   document.getElementById('funnel-container').innerHTML =
     `<div style="margin-bottom:0.5rem;font-size:11px;color:#7a7a85;text-transform:uppercase;letter-spacing:0.06em;">${monthLabel(key)}</div>` +
@@ -808,7 +813,7 @@ function _updateWeeklyTable(year, month) {
     label: w.label,
     since: w.since,
     until: w.until,
-    booked: 0, showed: 0, noshow: 0, cancelled: 0, sales: 0, pending: 0
+    booked: 0, showed: 0, noshow: 0, cancelled: 0, sales: 0, refunds: 0, pending: 0
   }));
 
   // Uses window.globalWeeklyRows for per-row data
@@ -832,6 +837,7 @@ function _updateWeeklyTable(year, month) {
         else if (r.cs === 'cancelled') { w.cancelled++; }
         else if (r.cs === 'pending')   { w.pending++; }
         if (r.sold) w.sales++;
+        if (r.refunded) w.refunds++;
         break;
       }
     }
@@ -850,7 +856,8 @@ function _updateWeeklyTable(year, month) {
     // Colors
     const bookedColor = w.booked >= 16 ? 'var(--green)' : w.booked >= 10 ? 'var(--warn)' : 'var(--danger)';
     const showColor   = showRate === null ? 'var(--muted)' : showRate >= 80 ? 'var(--green)' : showRate >= 65 ? 'var(--warn)' : 'var(--danger)';
-    const salesColor  = w.sales >= 5 ? 'var(--green)' : w.sales >= 3 ? 'var(--warn)' : w.sales > 0 ? 'var(--danger)' : 'var(--muted)';
+    const netSalesW = w.sales - (w.refunds||0);
+    const salesColor  = netSalesW >= 5 ? 'var(--green)' : netSalesW >= 3 ? 'var(--warn)' : netSalesW > 0 ? 'var(--danger)' : 'var(--muted)';
 
     // On track badge
     let badge = '';
@@ -889,7 +896,7 @@ function _updateWeeklyTable(year, month) {
         ${isFuture ? '<span style="color:var(--muted);">—</span>' : `<span style="font-family:var(--mono);font-weight:500;color:${showColor};">${w.showed}</span>${showRate !== null ? `<span style="font-size:11px;color:${showColor};"> (${showRate}%)</span>` : ''}`}
       </td>
       <td style="padding:10px 16px;text-align:center;">
-        ${isFuture ? '<span style="color:var(--muted);">—</span>' : `<span style="font-family:var(--mono);font-weight:500;color:${salesColor};">${w.sales}</span><span style="font-size:11px;color:var(--muted);">/5</span>`}
+        ${isFuture ? '<span style="color:var(--muted);">—</span>' : `<span style="font-family:var(--mono);font-weight:500;color:${salesColor};">${w.sales - (w.refunds||0)}</span><span style="font-size:11px;color:var(--muted);">/5</span>`}
       </td>
       <td style="padding:10px 16px;text-align:center;">${badge}</td>
     </tr>`;
@@ -899,7 +906,7 @@ function _updateWeeklyTable(year, month) {
   const totBooked   = weekStats.reduce((s,w) => s + w.booked, 0);
   const totShowed   = weekStats.reduce((s,w) => s + w.showed, 0);
   const totNoshow   = weekStats.reduce((s,w) => s + w.noshow, 0);
-  const totSales    = weekStats.reduce((s,w) => s + w.sales, 0);
+  const totSales    = weekStats.reduce((s,w) => s + Math.max(0, w.sales - (w.refunds||0)), 0);
   const totShowRate = totShowed + totNoshow > 0 ? Math.round(totShowed / (totShowed + totNoshow) * 100) : null;
   const totBookedColor = totBooked >= 62 ? 'var(--green)' : totBooked >= 46 ? 'var(--warn)' : 'var(--danger)';
   const totShowColor   = totShowRate === null ? 'var(--muted)' : totShowRate >= 80 ? 'var(--green)' : totShowRate >= 65 ? 'var(--warn)' : 'var(--danger)';
@@ -954,7 +961,7 @@ function renderSourceTable(containerId, data) {
   const totBooked  = rows.reduce((s,[,d]) => s + d.booked, 0);
   const totPending = rows.reduce((s,[,d]) => s + (d.pending||0), 0);
   const totShowed  = rows.reduce((s,[,d]) => s + (d.showed||0), 0);
-  const totSales   = rows.reduce((s,[,d]) => s + (d.sales||0), 0);
+  const totSales   = rows.reduce((s,[,d]) => s + Math.max(0,(d.sales||0)-(d.refunds||0)), 0);
   const totCR      = totShowed > 0 ? Math.round(totSales / totShowed * 100) : 0;
 
   const totBookedPctSrc = Math.round(totBooked / 62 * 100);
@@ -983,7 +990,7 @@ function renderSourceTable(containerId, data) {
     </thead>
     <tbody>
       ${rows.map(([src, d], i) => {
-        const cr = d.showed > 0 ? Math.round(d.sales / d.showed * 100) : 0;
+        const cr = d.showed > 0 ? Math.round(Math.max(0,(d.sales||0)-(d.refunds||0)) / d.showed * 100) : 0;
         const barW = Math.round(d.booked / maxBooked * 100);
         const border = 'border-bottom:1px solid var(--border);';
         return `<tr style="${border}">
@@ -996,7 +1003,7 @@ function renderSourceTable(containerId, data) {
           <td style="padding:10px 16px;text-align:center;font-family:var(--mono);color:${bookedColor(d.booked)};">${d.booked}</td>
           <td style="padding:10px 16px;text-align:center;font-family:var(--mono);color:var(--accent2);">${d.pending||0}</td>
           <td style="padding:10px 16px;text-align:center;font-family:var(--mono);">${d.showed||0}</td>
-          <td style="padding:10px 16px;text-align:center;font-family:var(--mono);">${d.sales||0}</td>
+          <td style="padding:10px 16px;text-align:center;font-family:var(--mono);">${Math.max(0,(d.sales||0)-(d.refunds||0))}</td>
           <td style="padding:10px 16px;text-align:center;font-family:var(--mono);font-weight:500;color:${cr > 0 ? closeColor(cr) : 'var(--muted)'};">${cr > 0 ? cr + '%' : '—'}</td>
         </tr>`;
       }).join('')}
