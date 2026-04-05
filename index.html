@@ -197,7 +197,7 @@
           <div style="font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Source performance — <span id="monthly-source-label">this month</span></div>
           <div style="font-size:11px;color:var(--muted);">selected month only</div>
         </div>
-        <div id="monthly-source-container" style="overflow-x:auto;"></div>
+        <div id="monthly-source-container"></div>
       </div>
 
       <div class="chart-card full">
@@ -428,7 +428,7 @@
           <div style="font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Source performance — current month</div>
           <div style="font-size:11px;color:var(--muted);">where are this month's leads coming from?</div>
         </div>
-        <div id="weekly-source-container" style="overflow-x:auto;"></div>
+        <div id="weekly-source-container"></div>
       </div>
     </div><!-- end tab-weekly -->
 
@@ -892,11 +892,26 @@ function renderSourceTable(containerId, data) {
   const closeColor = pct => pct >= 45 ? 'var(--green)' : pct >= 35 ? 'var(--warn)' : 'var(--danger)';
   const bookedColor = n => n >= 10 ? 'var(--green)' : n >= 5 ? 'var(--warn)' : 'var(--danger)';
 
+  // Totals
+  const totBooked = rows.reduce((s,[,d]) => s + d.booked, 0);
+  const totShowed = rows.reduce((s,[,d]) => s + (d.showed||0), 0);
+  const totSales  = rows.reduce((s,[,d]) => s + (d.sales||0), 0);
+  const totCR     = totShowed > 0 ? Math.round(totSales / totShowed * 100) : 0;
+
+  const totalsRow = `<tr style="border-top:2px solid var(--border);background:rgba(255,255,255,0.02);">
+    <td style="padding:10px 16px;font-weight:500;font-size:12px;color:var(--muted);">Total</td>
+    <td style="padding:10px 16px;"></td>
+    <td style="padding:10px 16px;text-align:center;font-family:var(--mono);font-weight:500;color:${bookedColor(totBooked)};">${totBooked}</td>
+    <td style="padding:10px 16px;text-align:center;font-family:var(--mono);font-weight:500;">${totShowed}</td>
+    <td style="padding:10px 16px;text-align:center;font-family:var(--mono);font-weight:500;">${totSales}</td>
+    <td style="padding:10px 16px;text-align:center;font-family:var(--mono);font-weight:500;color:${totCR > 0 ? closeColor(totCR) : 'var(--muted)'};">${totCR > 0 ? totCR + '%' : '—'}</td>
+  </tr>`;
+
   container.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
     <thead>
       <tr style="border-bottom:1px solid var(--border);">
         <th style="text-align:left;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Source</th>
-        <th style="text-align:left;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;min-width:120px;">Volume</th>
+        <th style="text-align:left;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Volume</th>
         <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Booked</th>
         <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Showed</th>
         <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Sales</th>
@@ -907,7 +922,7 @@ function renderSourceTable(containerId, data) {
       ${rows.map(([src, d], i) => {
         const cr = d.showed > 0 ? Math.round(d.sales / d.showed * 100) : 0;
         const barW = Math.round(d.booked / maxBooked * 100);
-        const border = i < rows.length - 1 ? 'border-bottom:1px solid var(--border);' : '';
+        const border = 'border-bottom:1px solid var(--border);';
         return `<tr style="${border}">
           <td style="padding:10px 16px;font-weight:500;">${src}</td>
           <td style="padding:10px 16px;">
@@ -916,11 +931,12 @@ function renderSourceTable(containerId, data) {
             </div>
           </td>
           <td style="padding:10px 16px;text-align:center;font-family:var(--mono);color:${bookedColor(d.booked)};">${d.booked}</td>
-          <td style="padding:10px 16px;text-align:center;font-family:var(--mono);">${d.showed}</td>
-          <td style="padding:10px 16px;text-align:center;font-family:var(--mono);">${d.sales}</td>
+          <td style="padding:10px 16px;text-align:center;font-family:var(--mono);">${d.showed||0}</td>
+          <td style="padding:10px 16px;text-align:center;font-family:var(--mono);">${d.sales||0}</td>
           <td style="padding:10px 16px;text-align:center;font-family:var(--mono);font-weight:500;color:${cr > 0 ? closeColor(cr) : 'var(--muted)'};">${cr > 0 ? cr + '%' : '—'}</td>
         </tr>`;
       }).join('')}
+      ${totalsRow}
     </tbody>
   </table>`;
 }
