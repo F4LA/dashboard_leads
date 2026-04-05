@@ -808,14 +808,10 @@ function _updateWeeklyTable(year, month) {
     label: w.label,
     since: w.since,
     until: w.until,
-    booked: 0, showed: 0, noshow: 0, cancelled: 0, sales: 0
+    booked: 0, showed: 0, noshow: 0, cancelled: 0, sales: 0, pending: 0
   }));
 
-  // Go through all months and find entries whose call date falls in current month weeks
-  for (const [key, m] of Object.entries(monthly)) {
-    // We don't have per-day data in globalMonthly, so we need to re-read from raw
-    // Instead, use the raw row data stored separately
-  }
+  // Uses window.globalWeeklyRows for per-row data
 
   // Use globalWeeklyRows if available
   if (!window.globalWeeklyRows) {
