@@ -835,6 +835,10 @@ function updateWeeklyTable(monthly) {
 
     const rowBg = isCurrent ? 'background:rgba(200,240,74,0.03);' : '';
 
+    const pendingCell = w.pending > 0
+      ? `<span style="font-family:var(--mono);font-weight:500;color:var(--accent2);">${w.pending}</span>`
+      : `<span style="color:var(--muted);">—</span>`;
+
     return `<tr style="border-bottom:1px solid var(--border);${rowBg}">
       <td style="padding:10px 16px;font-family:var(--mono);font-size:12px;color:${isCurrent ? 'var(--text)' : 'var(--muted)'};">${w.label}${isCurrent ? ' <span style="font-size:10px;color:var(--accent);">← this week</span>' : ''}</td>
       <td style="padding:10px 16px;text-align:center;">
@@ -844,6 +848,7 @@ function updateWeeklyTable(monthly) {
             ? `<span style="font-family:var(--mono);font-weight:500;color:var(--muted);">${w.booked}</span><span style="font-size:11px;color:var(--muted);">/16</span><span style="font-size:10px;color:var(--muted);margin-left:4px;">scheduled</span>`
             : `<span style="font-family:var(--mono);font-weight:500;color:${bookedColor};">${w.booked}</span><span style="font-size:11px;color:var(--muted);">/16</span>`}
       </td>
+      <td style="padding:10px 16px;text-align:center;">${pendingCell}</td>
       <td style="padding:10px 16px;text-align:center;">
         ${isFuture ? '<span style="color:var(--muted);">—</span>' : `<span style="font-family:var(--mono);font-weight:500;color:${showColor};">${w.showed}</span>${showRate !== null ? `<span style="font-size:11px;color:${showColor};"> (${showRate}%)</span>` : ''}`}
       </td>
@@ -868,6 +873,7 @@ function updateWeeklyTable(monthly) {
   const totalsRow = `<tr style="border-top:2px solid var(--border);background:rgba(255,255,255,0.02);">
     <td style="padding:10px 16px;font-weight:500;font-size:12px;color:var(--muted);">Month total</td>
     <td style="padding:10px 16px;text-align:center;"><span style="font-family:var(--mono);font-weight:500;color:${totBookedColor};">${totBooked}</span><span style="font-size:11px;color:var(--muted);">/62</span> <span style="font-size:11px;color:${totBookedColor};">(${totBookedPct}%)</span></td>
+    <td style="padding:10px 16px;text-align:center;"><span style="font-family:var(--mono);font-weight:500;color:var(--accent2);">${totPendingWeek}</span></td>
     <td style="padding:10px 16px;text-align:center;"><span style="font-family:var(--mono);font-weight:500;color:${totShowColor};">${totShowed}</span>${totShowRate !== null ? '<span style="font-size:11px;color:'+totShowColor+'"> ('+totShowRate+'%)</span>' : ''}</td>
     <td style="padding:10px 16px;text-align:center;"><span style="font-family:var(--mono);font-weight:500;color:${totSalesColor};">${totSales}</span><span style="font-size:11px;color:var(--muted);">/17</span> <span style="font-size:11px;color:${totSalesColor};">(${totSalesPct}%)</span></td>
     <td style="padding:10px 16px;text-align:center;font-size:11px;color:var(--muted);">month target</td>
