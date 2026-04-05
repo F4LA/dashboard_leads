@@ -584,7 +584,7 @@ function processData(rows) {
   }
   globalMonthly = monthly;
 
-  // Store raw rows for weekly table
+  // Store raw rows for weekly table — include ALL booked rows regardless of status
   window.globalWeeklyRows = [];
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
@@ -761,9 +761,10 @@ function updateWeeklyTable(monthly) {
     for (const w of weekStats) {
       if (callDt >= w.since && callDt <= w.until) {
         w.booked++;
-        if (r.cs === 'showed')    { w.showed++; }
-        else if (r.cs === 'no show') { w.noshow++; }
+        if (r.cs === 'showed')         { w.showed++; }
+        else if (r.cs === 'no show')   { w.noshow++; }
         else if (r.cs === 'cancelled') { w.cancelled++; }
+        // confirmed, follow up, empty = scheduled but not yet occurred
         if (r.sold) w.sales++;
         break;
       }
@@ -788,7 +789,9 @@ function updateWeeklyTable(monthly) {
     // On track badge
     let badge = '';
     if (isFuture) {
-      badge = `<span style="font-size:11px;color:var(--muted);">—</span>`;
+      badge = w.booked > 0
+        ? `<span style="font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;background:rgba(255,255,255,0.05);color:var(--muted);">${w.booked} scheduled</span>`
+        : `<span style="font-size:11px;color:var(--muted);">—</span>`;
     } else if (isCurrent) {
       const onTrack = w.booked >= 10;
       badge = `<span style="font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;background:${onTrack ? 'rgba(74,240,154,0.12)' : 'rgba(240,90,74,0.12)'};color:${onTrack ? 'var(--green)' : 'var(--danger)'};">● In progress</span>`;
@@ -803,7 +806,11 @@ function updateWeeklyTable(monthly) {
     return `<tr style="border-bottom:1px solid var(--border);${rowBg}">
       <td style="padding:10px 16px;font-family:var(--mono);font-size:12px;color:${isCurrent ? 'var(--text)' : 'var(--muted)'};">${w.label}${isCurrent ? ' <span style="font-size:10px;color:var(--accent);">← this week</span>' : ''}</td>
       <td style="padding:10px 16px;text-align:center;">
-        ${isFuture ? '<span style="color:var(--muted);">—</span>' : `<span style="font-family:var(--mono);font-weight:500;color:${bookedColor};">${w.booked}</span><span style="font-size:11px;color:var(--muted);">/16</span>`}
+        ${isFuture && w.booked === 0
+          ? '<span style="color:var(--muted);">—</span>'
+          : isFuture
+            ? `<span style="font-family:var(--mono);font-weight:500;color:var(--muted);">${w.booked}</span><span style="font-size:11px;color:var(--muted);">/16</span><span style="font-size:10px;color:var(--muted);margin-left:4px;">scheduled</span>`
+            : `<span style="font-family:var(--mono);font-weight:500;color:${bookedColor};">${w.booked}</span><span style="font-size:11px;color:var(--muted);">/16</span>`}
       </td>
       <td style="padding:10px 16px;text-align:center;">
         ${isFuture ? '<span style="color:var(--muted);">—</span>' : `<span style="font-family:var(--mono);font-weight:500;color:${showColor};">${w.showed}</span>${showRate !== null ? `<span style="font-size:11px;color:${showColor};"> (${showRate}%)</span>` : ''}`}
