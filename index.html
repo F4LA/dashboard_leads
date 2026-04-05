@@ -191,6 +191,15 @@
     </div>
     <div class="alerts" id="alerts-container"></div>
     <div class="charts-grid">
+      <!-- Monthly Source Table -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;">
+        <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Source performance — <span id="monthly-source-label">this month</span></div>
+          <div style="font-size:11px;color:var(--muted);">selected month only</div>
+        </div>
+        <div id="monthly-source-container" style="overflow-x:auto;"></div>
+      </div>
+
       <div class="chart-card full">
         <div class="chart-title">Booked calls per month</div>
         <div class="legend">
@@ -413,6 +422,14 @@
         </div>
         <div id="weekly-table-container" style="overflow-x:auto;"></div>
       </div>
+      <!-- Source table in weekly tab -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-top:1.5rem;">
+        <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Source performance — current month</div>
+          <div style="font-size:11px;color:var(--muted);">where are this month's leads coming from?</div>
+        </div>
+        <div id="weekly-source-container" style="overflow-x:auto;"></div>
+      </div>
     </div><!-- end tab-weekly -->
 
     <!-- Knowledge Base -->
@@ -613,6 +630,7 @@ function onMonthChange() {
   updateFunnel(key);
   updateRecommendations(key);
   updateSourceTable(key);
+  updateMonthlySourceTable(key);
 }
 
 function updateKPIs(curKey) {
@@ -831,11 +849,13 @@ function updateWeeklyTable(monthly) {
   const totBookedColor = totBooked >= 62 ? 'var(--green)' : totBooked >= 46 ? 'var(--warn)' : 'var(--danger)';
   const totShowColor   = totShowRate === null ? 'var(--muted)' : totShowRate >= 80 ? 'var(--green)' : totShowRate >= 65 ? 'var(--warn)' : 'var(--danger)';
   const totSalesColor  = totSales >= 17 ? 'var(--green)' : totSales >= 12 ? 'var(--warn)' : totSales > 0 ? 'var(--danger)' : 'var(--muted)';
+  const totBookedPct = Math.round(totBooked / 62 * 100);
+  const totSalesPct  = Math.round(totSales  / 17 * 100);
   const totalsRow = `<tr style="border-top:2px solid var(--border);background:rgba(255,255,255,0.02);">
     <td style="padding:10px 16px;font-weight:500;font-size:12px;color:var(--muted);">Month total</td>
-    <td style="padding:10px 16px;text-align:center;"><span style="font-family:var(--mono);font-weight:500;color:${totBookedColor};">${totBooked}</span><span style="font-size:11px;color:var(--muted);">/62</span></td>
+    <td style="padding:10px 16px;text-align:center;"><span style="font-family:var(--mono);font-weight:500;color:${totBookedColor};">${totBooked}</span><span style="font-size:11px;color:var(--muted);">/62</span> <span style="font-size:11px;color:${totBookedColor};">(${totBookedPct}%)</span></td>
     <td style="padding:10px 16px;text-align:center;"><span style="font-family:var(--mono);font-weight:500;color:${totShowColor};">${totShowed}</span>${totShowRate !== null ? '<span style="font-size:11px;color:'+totShowColor+'"> ('+totShowRate+'%)</span>' : ''}</td>
-    <td style="padding:10px 16px;text-align:center;"><span style="font-family:var(--mono);font-weight:500;color:${totSalesColor};">${totSales}</span><span style="font-size:11px;color:var(--muted);">/17</span></td>
+    <td style="padding:10px 16px;text-align:center;"><span style="font-family:var(--mono);font-weight:500;color:${totSalesColor};">${totSales}</span><span style="font-size:11px;color:var(--muted);">/17</span> <span style="font-size:11px;color:${totSalesColor};">(${totSalesPct}%)</span></td>
     <td style="padding:10px 16px;text-align:center;font-size:11px;color:var(--muted);">month target</td>
   </tr>`;
 
@@ -852,6 +872,70 @@ function updateWeeklyTable(monthly) {
       </thead>
       <tbody>${rows}${totalsRow}</tbody>
     </table>`;
+}
+
+
+function renderSourceTable(containerId, data) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const rows = Object.entries(data)
+    .filter(([,d]) => d.booked >= 1)
+    .sort((a,b) => b[1].booked - a[1].booked);
+
+  if (rows.length === 0) {
+    container.innerHTML = '<div style="padding:1rem 1.25rem;font-size:12px;color:var(--muted);">No data for this period.</div>';
+    return;
+  }
+
+  const maxBooked = Math.max(...rows.map(([,d]) => d.booked), 1);
+  const closeColor = pct => pct >= 45 ? 'var(--green)' : pct >= 35 ? 'var(--warn)' : 'var(--danger)';
+  const bookedColor = n => n >= 10 ? 'var(--green)' : n >= 5 ? 'var(--warn)' : 'var(--danger)';
+
+  container.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <thead>
+      <tr style="border-bottom:1px solid var(--border);">
+        <th style="text-align:left;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Source</th>
+        <th style="text-align:left;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;min-width:120px;">Volume</th>
+        <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Booked</th>
+        <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Showed</th>
+        <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Sales</th>
+        <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Close rate</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows.map(([src, d], i) => {
+        const cr = d.showed > 0 ? Math.round(d.sales / d.showed * 100) : 0;
+        const barW = Math.round(d.booked / maxBooked * 100);
+        const border = i < rows.length - 1 ? 'border-bottom:1px solid var(--border);' : '';
+        return `<tr style="${border}">
+          <td style="padding:10px 16px;font-weight:500;">${src}</td>
+          <td style="padding:10px 16px;">
+            <div style="background:rgba(255,255,255,0.05);border-radius:3px;height:6px;">
+              <div style="background:var(--accent2);border-radius:3px;height:6px;width:${barW}%;"></div>
+            </div>
+          </td>
+          <td style="padding:10px 16px;text-align:center;font-family:var(--mono);color:${bookedColor(d.booked)};">${d.booked}</td>
+          <td style="padding:10px 16px;text-align:center;font-family:var(--mono);">${d.showed}</td>
+          <td style="padding:10px 16px;text-align:center;font-family:var(--mono);">${d.sales}</td>
+          <td style="padding:10px 16px;text-align:center;font-family:var(--mono);font-weight:500;color:${cr > 0 ? closeColor(cr) : 'var(--muted)'};">${cr > 0 ? cr + '%' : '—'}</td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>`;
+}
+
+function updateMonthlySourceTable(curKey) {
+  const m = globalMonthly[curKey];
+  if (!m) return;
+
+  // Update label
+  const labelEl = document.getElementById('monthly-source-label');
+  if (labelEl) labelEl.textContent = monthLabel(curKey);
+
+  // Use sources from selected month only
+  renderSourceTable('monthly-source-container', m.sources || {});
+  renderSourceTable('weekly-source-container', m.sources || {});
 }
 
 function updateRecommendations(curKey) {
@@ -971,6 +1055,7 @@ function renderDashboard(monthly) {
   updateRecommendations(sel.value);
   updateSourceTable(sel.value);
   updateWeeklyTable(monthly);
+  updateMonthlySourceTable(sel.value);
 
   // Charts (always full history)
   const labels    = keys.map(monthLabel);
