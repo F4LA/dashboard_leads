@@ -822,6 +822,23 @@ function updateWeeklyTable(monthly) {
     </tr>`;
   }).join('');
 
+  // Totals row
+  const totBooked   = weekStats.reduce((s,w) => s + w.booked, 0);
+  const totShowed   = weekStats.reduce((s,w) => s + w.showed, 0);
+  const totNoshow   = weekStats.reduce((s,w) => s + w.noshow, 0);
+  const totSales    = weekStats.reduce((s,w) => s + w.sales, 0);
+  const totShowRate = totShowed + totNoshow > 0 ? Math.round(totShowed / (totShowed + totNoshow) * 100) : null;
+  const totBookedColor = totBooked >= 62 ? 'var(--green)' : totBooked >= 46 ? 'var(--warn)' : 'var(--danger)';
+  const totShowColor   = totShowRate === null ? 'var(--muted)' : totShowRate >= 80 ? 'var(--green)' : totShowRate >= 65 ? 'var(--warn)' : 'var(--danger)';
+  const totSalesColor  = totSales >= 17 ? 'var(--green)' : totSales >= 12 ? 'var(--warn)' : totSales > 0 ? 'var(--danger)' : 'var(--muted)';
+  const totalsRow = `<tr style="border-top:2px solid var(--border);background:rgba(255,255,255,0.02);">
+    <td style="padding:10px 16px;font-weight:500;font-size:12px;color:var(--muted);">Month total</td>
+    <td style="padding:10px 16px;text-align:center;"><span style="font-family:var(--mono);font-weight:500;color:${totBookedColor};">${totBooked}</span><span style="font-size:11px;color:var(--muted);">/62</span></td>
+    <td style="padding:10px 16px;text-align:center;"><span style="font-family:var(--mono);font-weight:500;color:${totShowColor};">${totShowed}</span>${totShowRate !== null ? '<span style="font-size:11px;color:'+totShowColor+'"> ('+totShowRate+'%)</span>' : ''}</td>
+    <td style="padding:10px 16px;text-align:center;"><span style="font-family:var(--mono);font-weight:500;color:${totSalesColor};">${totSales}</span><span style="font-size:11px;color:var(--muted);">/17</span></td>
+    <td style="padding:10px 16px;text-align:center;font-size:11px;color:var(--muted);">month target</td>
+  </tr>`;
+
   document.getElementById('weekly-table-container').innerHTML = `
     <table style="width:100%;border-collapse:collapse;font-size:13px;">
       <thead>
@@ -833,7 +850,7 @@ function updateWeeklyTable(monthly) {
           <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Status</th>
         </tr>
       </thead>
-      <tbody>${rows}</tbody>
+      <tbody>${rows}${totalsRow}</tbody>
     </table>`;
 }
 
