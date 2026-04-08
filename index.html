@@ -896,7 +896,7 @@ function _updateWeeklyTable(year, month) {
         ${isFuture ? '<span style="color:var(--muted);">—</span>' : `<span style="font-family:var(--mono);font-weight:500;color:${showColor};">${w.showed}</span>${showRate !== null ? `<span style="font-size:11px;color:${showColor};"> (${showRate}%)</span>` : ''}`}
       </td>
       <td style="padding:10px 16px;text-align:center;">
-        ${isFuture ? '<span style="color:var(--muted);">—</span>' : `<span style="font-family:var(--mono);font-weight:500;color:${salesColor};">${w.sales - (w.refunds||0)}</span><span style="font-size:11px;color:var(--muted);">/5</span>`}
+        ${isFuture ? '<span style="color:var(--muted);">—</span>' : (() => { const net = w.sales - (w.refunds||0); const cr = w.showed > 0 ? Math.round(net / w.showed * 100) : 0; return `<span style="font-family:var(--mono);font-weight:500;color:${salesColor};">${net}</span>${cr > 0 ? `<span style="font-size:11px;color:${salesColor};"> (${cr}%)</span>` : ''}`; })()}
       </td>
       <td style="padding:10px 16px;text-align:center;">${badge}</td>
     </tr>`;
@@ -919,7 +919,7 @@ function _updateWeeklyTable(year, month) {
     <td style="padding:10px 16px;text-align:center;"><span style="font-family:var(--mono);font-weight:500;color:${totBookedColor};">${totBooked}</span><span style="font-size:11px;color:var(--muted);">/62</span> <span style="font-size:11px;color:${totBookedColor};">(${totBookedPct}%)</span></td>
     <td style="padding:10px 16px;text-align:center;"><span style="font-family:var(--mono);font-weight:500;color:var(--accent2);">${totPendingWeek}</span></td>
     <td style="padding:10px 16px;text-align:center;"><span style="font-family:var(--mono);font-weight:500;color:${totShowColor};">${totShowed}</span>${totShowRate !== null ? '<span style="font-size:11px;color:'+totShowColor+'"> ('+totShowRate+'%)</span>' : ''}</td>
-    <td style="padding:10px 16px;text-align:center;"><span style="font-family:var(--mono);font-weight:500;color:${totSalesColor};">${totSales}</span><span style="font-size:11px;color:var(--muted);">/17</span> <span style="font-size:11px;color:${totSalesColor};">(${totSalesPct}%)</span></td>
+    <td style="padding:10px 16px;text-align:center;"><span style="font-family:var(--mono);font-weight:500;color:${totSalesColor};">${totSales}</span><span style="font-size:11px;color:var(--muted);">/17</span> <span style="font-size:11px;color:${totSalesColor};">(${totShowRate !== null ? Math.round(totSales/totShowed*100) : 0}% CR)</span></td>
     <td style="padding:10px 16px;text-align:center;font-size:11px;color:var(--muted);">month target</td>
   </tr>`;
 
