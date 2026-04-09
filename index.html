@@ -121,6 +121,7 @@
     <div class="tab-bar">
       <button class="tab-btn active" onclick="switchTab('monthly', this)">Monthly</button>
       <button class="tab-btn" onclick="switchTab('weekly', this)">Weekly</button>
+      <button class="tab-btn" onclick="switchTab('compare', this)">Compare</button>
     </div>
 
     <!-- Monthly tab -->
@@ -436,6 +437,16 @@
       </div>
     </div><!-- end tab-weekly -->
 
+    <!-- Compare tab -->
+    <div id="tab-compare" class="tab-content">
+      <div style="margin-bottom:1.5rem;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Comparing</div>
+        <div id="compare-label" style="font-size:14px;font-weight:500;color:var(--text);">— vs —</div>
+      </div>
+      <div id="compare-cards" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:2rem;"></div>
+      <div id="compare-sources" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:2rem;"></div>
+    </div><!-- end tab-compare -->
+
     <!-- Knowledge Base -->
     <div style="margin-top:2.5rem;padding-top:2rem;border-top:1px solid var(--border);">
       <div style="font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1.5rem;">Knowledge base — where each number comes from</div>
@@ -490,11 +501,124 @@ let globalMonthly = {};
 
 if (apiKey) { showLoading(); loadData(); }
 
+
+function updateCompareTab() {
+  const keys = Object.keys(globalMonthly).sort();
+  if (keys.length < 2) {
+    document.getElementById('compare-cards').innerHTML = '<div style="color:var(--muted);font-size:13px;">Need at least 2 months of data.</div>';
+    return;
+  }
+
+  const curKey  = keys[keys.length - 1];
+  const prevKey = keys[keys.length - 2];
+  const cur  = globalMonthly[curKey]  || {};
+  const prev = globalMonthly[prevKey] || {};
+
+  document.getElementById('compare-label').textContent = `${monthLabel(curKey).toUpperCase()} vs ${monthLabel(prevKey).toUpperCase()}`;
+
+  const curNet  = (cur.sales  || 0) - (cur.refunds  || 0);
+  const prevNet = (prev.sales || 0) - (prev.refunds || 0);
+  const curShow  = cur.showed  + cur.noshow  > 0 ? Math.round(cur.showed  / (cur.showed  + cur.noshow)  * 100) : 0;
+  const prevShow = prev.showed + prev.noshow > 0 ? Math.round(prev.showed / (prev.showed + prev.noshow) * 100) : 0;
+  const curClose  = cur.showed  > 0 ? Math.round(curNet  / cur.showed  * 100) : 0;
+  const prevClose = prev.showed > 0 ? Math.round(prevNet / prev.showed * 100) : 0;
+  const curCancel  = cur.booked  > 0 ? Math.round(cur.cancelled  / cur.booked  * 100) : 0;
+  const prevCancel = prev.booked > 0 ? Math.round(prev.cancelled / prev.booked * 100) : 0;
+
+  const metrics = [
+    { label: 'Booked Calls',      cur: cur.booked||0,  prev: prev.booked||0,  fmt: v => v,        better: 'higher', target: 62,  unit: '' },
+    { label: 'Show Rate',         cur: curShow,         prev: prevShow,        fmt: v => v + '%',  better: 'higher', target: 80,  unit: '%' },
+    { label: 'Cancellations',     cur: curCancel,       prev: prevCancel,      fmt: v => v + '%',  better: 'lower',  target: 18,  unit: '%' },
+    { label: 'Close Rate',        cur: curClose,        prev: prevClose,       fmt: v => v + '%',  better: 'higher', target: 45,  unit: '%' },
+    { label: 'Refunds',           cur: cur.refunds||0,  prev: prev.refunds||0, fmt: v => v,        better: 'lower',  target: 2,   unit: '' },
+    { label: 'Net Sales',         cur: curNet,          prev: prevNet,         fmt: v => v,        better: 'higher', target: 17,  unit: '' },
+  ];
+
+  document.getElementById('compare-cards').innerHTML = metrics.map(m => {
+    const diff = m.cur - m.prev;
+    const diffPct = m.prev > 0 ? Math.round(Math.abs(diff) / m.prev * 100) : 0;
+    const improved = m.better === 'higher' ? diff > 0 : diff < 0;
+    const same = diff === 0;
+    const color = same ? 'var(--muted)' : improved ? 'var(--green)' : 'var(--danger)';
+    const arrow = same ? '→' : diff > 0 ? '↑' : '↓';
+    const changeText = same ? 'No change' : `${arrow} ${diffPct}% vs last month`;
+
+    // Target badge
+    const atTarget = m.better === 'higher' ? m.cur >= m.target : m.cur <= m.target;
+    const badgeCls = atTarget ? 'badge-green' : 'badge-warn';
+    const badgeTxt = atTarget ? '✓ On target' : `Target: ${m.better === 'higher' ? '≥' : '≤'} ${m.target}${m.unit}`;
+
+    return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:${color};"></div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;">${m.label}</div>
+      <div style="display:flex;align-items:baseline;gap:16px;margin-bottom:8px;">
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:2px;">${monthLabel(curKey)}</div>
+          <div style="font-size:28px;font-weight:300;font-family:var(--mono);color:var(--text);line-height:1;">${m.fmt(m.cur)}</div>
+        </div>
+        <div style="font-size:18px;color:var(--border);">vs</div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:2px;">${monthLabel(prevKey)}</div>
+          <div style="font-size:28px;font-weight:300;font-family:var(--mono);color:var(--muted);line-height:1;">${m.fmt(m.prev)}</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:${color};font-weight:500;margin-bottom:6px;">${changeText}</div>
+      <span class="kpi-badge ${badgeCls}">${badgeTxt}</span>
+    </div>`;
+  }).join('');
+
+  // Source comparison table
+  const allSources = new Set([...Object.keys(cur.sources||{}), ...Object.keys(prev.sources||{})]);
+  const srcRows = [...allSources]
+    .map(src => {
+      const c = cur.sources?.[src]  || {booked:0,showed:0,sales:0,refunds:0};
+      const p = prev.sources?.[src] || {booked:0,showed:0,sales:0,refunds:0};
+      return { src, cBooked: c.booked, pBooked: p.booked,
+               cNet: Math.max(0,(c.sales||0)-(c.refunds||0)),
+               pNet: Math.max(0,(p.sales||0)-(p.refunds||0)) };
+    })
+    .filter(r => r.cBooked > 0 || r.pBooked > 0)
+    .sort((a,b) => b.cBooked - a.cBooked);
+
+  const arw = (c,p, better='higher') => {
+    if (c === p) return '<span style="color:var(--muted);">→</span>';
+    const up = c > p;
+    const good = better === 'higher' ? up : !up;
+    return `<span style="color:${good ? 'var(--green)' : 'var(--danger)'};">${up ? '↑' : '↓'}</span>`;
+  };
+
+  document.getElementById('compare-sources').innerHTML = `
+    <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Source comparison</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead><tr style="border-bottom:1px solid var(--border);">
+        <th style="text-align:left;padding:10px 16px;font-size:11px;color:var(--muted);">Source</th>
+        <th style="text-align:center;padding:10px 16px;font-size:11px;color:var(--muted);">Booked ${monthLabel(curKey)}</th>
+        <th style="text-align:center;padding:10px 16px;font-size:11px;color:var(--muted);">Booked ${monthLabel(prevKey)}</th>
+        <th style="text-align:center;padding:10px 16px;font-size:11px;color:var(--muted);">Trend</th>
+        <th style="text-align:center;padding:10px 16px;font-size:11px;color:var(--muted);">Net Sales ${monthLabel(curKey)}</th>
+        <th style="text-align:center;padding:10px 16px;font-size:11px;color:var(--muted);">Net Sales ${monthLabel(prevKey)}</th>
+        <th style="text-align:center;padding:10px 16px;font-size:11px;color:var(--muted);">Trend</th>
+      </tr></thead>
+      <tbody>
+        ${srcRows.map((r,i) => `<tr style="border-bottom:${i<srcRows.length-1?'1px solid var(--border)':'none'};">
+          <td style="padding:10px 16px;font-weight:500;">${r.src}</td>
+          <td style="padding:10px 16px;text-align:center;font-family:var(--mono);">${r.cBooked}</td>
+          <td style="padding:10px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">${r.pBooked}</td>
+          <td style="padding:10px 16px;text-align:center;font-size:14px;">${arw(r.cBooked,r.pBooked)}</td>
+          <td style="padding:10px 16px;text-align:center;font-family:var(--mono);">${r.cNet}</td>
+          <td style="padding:10px 16px;text-align:center;font-family:var(--mono);color:var(--muted);">${r.pNet}</td>
+          <td style="padding:10px 16px;text-align:center;font-size:14px;">${arw(r.cNet,r.pNet)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
 function switchTab(name, btn) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   btn.classList.add('active');
+  if (name === 'compare') updateCompareTab();
 }
 
 function onWeeklyMonthChange() {
