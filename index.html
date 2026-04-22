@@ -439,9 +439,15 @@
 
     <!-- Compare tab -->
     <div id="tab-compare" class="tab-content">
-      <div style="margin-bottom:1.5rem;">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Comparing</div>
-        <div id="compare-label" style="font-size:14px;font-weight:500;color:var(--text);">— vs —</div>
+      <div style="display:flex;align-items:center;gap:24px;margin-bottom:1.5rem;flex-wrap:wrap;">
+        <div class="month-bar" style="margin-bottom:0;">
+          <label>Month</label>
+          <select id="month-selector-compare" onchange="updateCompareTab()"></select>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Comparing</div>
+          <div id="compare-label" style="font-size:14px;font-weight:500;color:var(--text);">— vs —</div>
+        </div>
       </div>
       <div id="compare-cards" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:2rem;"></div>
       <div id="compare-sources" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:2rem;"></div>
@@ -502,6 +508,17 @@ let globalMonthly = {};
 if (apiKey) { showLoading(); loadData(); }
 
 
+function populateCompareSelectorIfNeeded() {
+  const sel = document.getElementById('month-selector-compare');
+  if (!sel) return;
+  const keys = Object.keys(globalMonthly).sort();
+  const current = sel.value;
+  sel.innerHTML = keys.map(k => `<option value="${k}">${monthLabel(k)}</option>`).join('');
+  // Keep selection if still valid, otherwise default to latest
+  if (current && keys.includes(current)) sel.value = current;
+  else sel.value = keys[keys.length - 1] || '';
+}
+
 function updateCompareTab() {
   const keys = Object.keys(globalMonthly).sort();
   if (keys.length < 2) {
@@ -509,8 +526,13 @@ function updateCompareTab() {
     return;
   }
 
-  const curKey  = keys[keys.length - 1];
-  const prevKey = keys[keys.length - 2];
+  populateCompareSelectorIfNeeded();
+
+  const sel = document.getElementById('month-selector-compare');
+  const selVal = sel && sel.value && keys.includes(sel.value) ? sel.value : keys[keys.length - 1];
+  const selIdx = keys.indexOf(selVal);
+  const curKey  = selVal;
+  const prevKey = selIdx > 0 ? keys[selIdx - 1] : keys[0];
   const cur  = globalMonthly[curKey]  || {};
   const prev = globalMonthly[prevKey] || {};
 
@@ -1268,6 +1290,13 @@ function renderDashboard(monthly) {
   if (wsel) {
     wsel.innerHTML = sel.innerHTML;
     wsel.value = sel.value;
+  }
+
+  // Populate compare selector (most recent month selected by default)
+  const csel = document.getElementById('month-selector-compare');
+  if (csel) {
+    csel.innerHTML = [...keys].reverse().map(k => `<option value="${k}">${monthLabel(k).toUpperCase()}</option>`).join('');
+    csel.value = keys[keys.length - 1];
   }
 
   updateKPIs(sel.value);
