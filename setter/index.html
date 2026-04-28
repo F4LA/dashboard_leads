@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Setter — DM Tracking</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f0f11; --surface: #17171a; --border: rgba(255,255,255,0.07);
+    --text: #f0efe8; --muted: #7a7a85; --accent: #c8f04a; --accent2: #4a8ff0;
+    --danger: #f05a4a; --warn: #f0a84a; --green: #4af09a; --radius: 12px;
+    --mono: 'DM Mono', monospace; --sans: 'DM Sans', sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; min-height: 100vh; }
+
+  /* Setup */
+  #setup-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+  .setup-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.5rem; max-width: 480px; width: 100%; }
+  .setup-card h1 { font-size: 20px; font-weight: 500; margin-bottom: 6px; }
+  .setup-card p { color: var(--muted); font-size: 13px; line-height: 1.6; margin-bottom: 1.5rem; }
+  .setup-card input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-family: var(--mono); font-size: 13px; margin-bottom: 12px; outline: none; transition: border-color 0.2s; }
+  .setup-card input:focus { border-color: var(--accent); }
+  .setup-card input::placeholder { color: var(--muted); }
+  .btn { background: var(--accent); color: #0f0f11; border: none; border-radius: 8px; padding: 10px 20px; font-family: var(--sans); font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; }
+  .btn:hover { opacity: 0.85; }
+  #setup-error { color: var(--danger); font-size: 12px; margin-top: 8px; display: none; }
+
+  /* Loading */
+  #loading { min-height: 100vh; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+  .spinner { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loading p { font-size: 13px; color: var(--muted); }
+
+  /* Dashboard */
+  #dashboard { display: none; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 2rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 10; }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  header h1 { font-size: 15px; font-weight: 500; }
+  .last-updated { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  .btn-refresh { background: var(--surface); color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; font-size: 12px; cursor: pointer; font-family: var(--sans); }
+  .btn-refresh:hover { color: var(--text); }
+
+  main { padding: 2rem; max-width: 1200px; margin: 0 auto; }
+
+  /* Tabs */
+  .tab-bar { display: flex; gap: 8px; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+  .tab-btn { background: none; border: none; border-bottom: 2px solid transparent; padding: 8px 16px; font-family: var(--sans); font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; margin-bottom: -1px; transition: all 0.2s; }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--text); border-bottom-color: var(--accent); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Month bar */
+  .month-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; }
+  .month-bar label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .month-bar select { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; font-family: var(--mono); font-size: 13px; outline: none; cursor: pointer; }
+
+  /* KPI cards */
+  .kpi-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; margin-bottom: 2rem; }
+  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; position: relative; overflow: hidden; }
+  .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--card-accent, var(--border)); }
+  .kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+  .kpi-value { font-size: 32px; font-weight: 300; letter-spacing: -0.02em; line-height: 1; margin-bottom: 6px; font-family: var(--mono); }
+  .kpi-meta { font-size: 11px; color: var(--muted); }
+  .kpi-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; margin-top: 6px; }
+  .badge-green { background: rgba(74,240,154,0.12); color: var(--green); }
+  .badge-warn  { background: rgba(240,168,74,0.12); color: var(--warn); }
+  .badge-red   { background: rgba(240,90,74,0.12); color: var(--danger); }
+  .target-bar-wrap { margin-top: 8px; }
+  .target-bar-bg { background: rgba(255,255,255,0.07); border-radius: 4px; height: 4px; }
+  .target-bar-fill { height: 4px; border-radius: 4px; background: var(--accent); transition: width 0.8s ease; }
+  .target-label { font-size: 10px; color: var(--muted); margin-top: 4px; font-family: var(--mono); }
+
+  /* Cards / charts */
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; }
+  .chart-card.full { grid-column: 1 / -1; }
+  .chart-title { font-size: 12px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1.25rem; }
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+  @media (max-width: 768px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid { grid-template-columns: 1fr; }
+    main { padding: 1rem; }
+    header { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Setup -->
+<div id="setup-screen">
+  <div class="setup-card">
+    <h1>Setter — DM Tracking</h1>
+    <p>Ingresa tu Google Cloud API key para conectar con la hoja de cálculo. La key se guarda solo en tu navegador.</p>
+    <input type="password" id="api-key-input" placeholder="AIza..." autocomplete="off" />
+    <button class="btn" onclick="connect()">Conectar</button>
+    <div id="setup-error">No se pudo conectar. Verifica que la API key sea correcta y que la hoja esté compartida como "anyone with the link can view".</div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="spinner"></div>
+  <p>Cargando datos...</p>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard">
+  <header>
+    <div class="header-left">
+      <div class="logo-dot"></div>
+      <h1>Setter — DM Tracking</h1>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="last-updated" id="last-updated"></span>
+      <button class="btn-refresh" onclick="loadData()">↻ Refresh</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('monthly', this)">Monthly</button>
+      <button class="tab-btn" onclick="switchTab('weekly', this)">Weekly</button>
+    </div>
+
+    <!-- ===== MONTHLY TAB ===== -->
+    <div id="tab-monthly" class="tab-content active">
+      <div class="month-bar">
+        <label>Mes</label>
+        <select id="month-selector" onchange="onMonthChange()"></select>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card" style="--card-accent: var(--accent)">
+          <div class="kpi-label">Total mensajes</div>
+          <div class="kpi-value" id="kpi-total">—</div>
+          <div class="target-bar-wrap">
+            <div class="target-bar-bg"><div class="target-bar-fill" id="bar-total" style="width:0%"></div></div>
+            <div class="target-label">Target: 2,520 | <span id="kpi-total-pct">—</span></div>
+          </div>
+          <div class="kpi-badge" id="badge-total">—</div>
+        </div>
+        <div class="kpi-card" style="--card-accent: var(--accent2)">
+          <div class="kpi-label">Mensajes de Ads</div>
+          <div class="kpi-value" id="kpi-ads">—</div>
+          <div class="kpi-meta" id="kpi-ads-pct">—% del total</div>
+        </div>
+        <div class="kpi-card" style="--card-accent: var(--green)">
+          <div class="kpi-label">Mensajes orgánicos</div>
+          <div class="kpi-value" id="kpi-organic">—</div>
+          <div class="kpi-meta" id="kpi-organic-pct">—% del total</div>
+        </div>
+      </div>
+
+      <!-- Source breakdown table -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:2rem;">
+        <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Mensajes por fuente — <span id="monthly-source-label">este mes</span></div>
+          <div style="font-size:11px;color:var(--muted);">mes seleccionado</div>
+        </div>
+        <div id="monthly-source-table"></div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-grid">
+        <div class="chart-card full">
+          <div class="chart-title">Mensajes por mes — total, ads y orgánico</div>
+          <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);"><div style="width:8px;height:8px;border-radius:2px;background:var(--accent);"></div>Total</div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);"><div style="width:8px;height:8px;border-radius:2px;background:var(--accent2);"></div>Ads</div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);"><div style="width:8px;height:8px;border-radius:2px;background:var(--green);"></div>Orgánico</div>
+          </div>
+          <div style="position:relative;width:100%;height:220px;"><canvas id="cVolumen"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Mix ads vs orgánico por mes (%)</div>
+          <div style="position:relative;width:100%;height:200px;"><canvas id="cMix"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Top fuentes orgánicas — mes seleccionado</div>
+          <div style="position:relative;width:100%;height:200px;"><canvas id="cOrganic"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== WEEKLY TAB ===== -->
+    <div id="tab-weekly" class="tab-content">
+      <div class="month-bar">
+        <label>Mes</label>
+        <select id="month-selector-weekly" onchange="onWeeklyMonthChange()"></select>
+      </div>
+
+      <!-- Weekly KPI summary -->
+      <div class="kpi-grid" style="margin-bottom:1.5rem;">
+        <div class="kpi-card" style="--card-accent: var(--accent)">
+          <div class="kpi-label">Total del mes</div>
+          <div class="kpi-value" id="w-kpi-total">—</div>
+          <div class="target-label">Target: 2,520</div>
+          <div class="kpi-badge" id="w-badge-total">—</div>
+        </div>
+        <div class="kpi-card" style="--card-accent: var(--accent2)">
+          <div class="kpi-label">Ads</div>
+          <div class="kpi-value" id="w-kpi-ads">—</div>
+          <div class="kpi-meta" id="w-kpi-ads-pct">— % del total</div>
+        </div>
+        <div class="kpi-card" style="--card-accent: var(--green)">
+          <div class="kpi-label">Orgánico</div>
+          <div class="kpi-value" id="w-kpi-organic">—</div>
+          <div class="kpi-meta" id="w-kpi-organic-pct">— % del total</div>
+        </div>
+      </div>
+
+      <!-- Weekly breakdown table -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:2rem;">
+        <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Desglose semanal — <span id="weekly-month-label">mes actual</span></div>
+          <div style="font-size:11px;color:var(--muted);">Lun–Dom | target: ~630/semana</div>
+        </div>
+        <div id="weekly-table-container" style="overflow-x:auto;"></div>
+      </div>
+
+      <!-- Weekly chart -->
+      <div class="chart-card">
+        <div class="chart-title">Mensajes por semana — ads vs orgánico</div>
+        <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);"><div style="width:8px;height:8px;border-radius:2px;background:var(--accent2);"></div>Ads</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);"><div style="width:8px;height:8px;border-radius:2px;background:var(--green);"></div>Orgánico</div>
+        </div>
+        <div style="position:relative;width:100%;height:220px;"><canvas id="cWeekly"></canvas></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+const SHEET_ID = '1ctM6K8hQfh73bi7f-MtXkqW3BaPxU73NZf8xPJQUEOc';
+const TAB_NAME = 'DM TRACKING INDEX';
+const TARGET_MSGS = 2520;
+const TARGET_WEEKLY = 630;
+
+let apiKey = localStorage.getItem('gsheets_api_key') || '';
+let globalMonthly = {};
+let globalRawRows = [];
+let charts = {};
+
+if (apiKey) { showLoading(); loadData(); }
+
+function connect() {
+  const input = document.getElementById('api-key-input').value.trim();
+  if (!input) return;
+  apiKey = input;
+  localStorage.setItem('gsheets_api_key', apiKey);
+  document.getElementById('setup-error').style.display = 'none';
+  showLoading();
+  loadData();
+}
+
+function showLoading() {
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+}
+
+async function loadData() {
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+  try {
+    const tabEncoded = encodeURIComponent(TAB_NAME);
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${tabEncoded}!A:F?key=${apiKey}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('API error ' + res.status);
+    const json = await res.json();
+    processData(json.values);
+  } catch(e) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('setup-screen').style.display = 'flex';
+    document.getElementById('setup-error').style.display = 'block';
+    localStorage.removeItem('gsheets_api_key');
+    apiKey = '';
+  }
+}
+
+function parseTS(str) {
+  if (!str) return null;
+  const m = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return new Date(+m[1], +m[2]-1, +m[3]);
+  return null;
+}
+
+function normalizeSource(raw) {
+  const s = raw.trim();
+  const sl = s.toLowerCase();
+  if (!s) return 'Sin fuente';
+  if (sl.includes('ads')) return s; // keep full name e.g. "Blueprint – Ads"
+  return s; // keep full name for organics too
+}
+
+function isAds(src) {
+  return src.toLowerCase().includes('ads');
+}
+
+function processData(rows) {
+  if (!rows || rows.length < 2) return;
+  const headers = rows[0].map(h => h.trim().toLowerCase());
+  const iSrc = headers.findIndex(h => h === 'source');
+  const iTS  = headers.findIndex(h => h === 'new lead ts');
+
+  const monthly = {};
+  const rawRows = [];
+
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    const tsStr = (r[iTS] || '').trim();
+    const dt = parseTS(tsStr);
+    if (!dt) continue;
+    const key = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;
+    const src = normalizeSource(r[iSrc] || '');
+    const ads = isAds(src);
+
+    if (!monthly[key]) monthly[key] = { total: 0, ads: 0, organic: 0, sources: {} };
+    monthly[key].total++;
+    if (ads) monthly[key].ads++;
+    else monthly[key].organic++;
+    monthly[key].sources[src] = (monthly[key].sources[src] || 0) + 1;
+
+    rawRows.push({ dt, key, src, ads });
+  }
+
+  globalMonthly = monthly;
+  globalRawRows = rawRows;
+  renderDashboard();
+}
+
+function monthLabel(k) {
+  const [y, mo] = k.split('-');
+  const names = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return names[+mo] + ' ' + y.slice(2);
+}
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function onMonthChange() {
+  const key = document.getElementById('month-selector').value;
+  updateMonthly(key);
+}
+
+function onWeeklyMonthChange() {
+  const key = document.getElementById('month-selector-weekly').value;
+  updateWeekly(key);
+}
+
+function setBadge(id, val, target) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const pct = val / target;
+  let cls, text;
+  if (pct >= 1)        { cls = 'badge-green'; text = '✓ Meta alcanzada'; }
+  else if (pct >= 0.8) { cls = 'badge-warn';  text = `⚠ ${Math.round(pct*100)}% de la meta`; }
+  else                 { cls = 'badge-red';   text = `✗ ${Math.round(pct*100)}% de la meta`; }
+  el.className = 'kpi-badge ' + cls;
+  el.textContent = text;
+}
+
+function updateMonthly(key) {
+  const m = globalMonthly[key] || { total:0, ads:0, organic:0, sources:{} };
+
+  document.getElementById('kpi-total').textContent   = m.total.toLocaleString();
+  document.getElementById('kpi-ads').textContent     = m.ads.toLocaleString();
+  document.getElementById('kpi-organic').textContent = m.organic.toLocaleString();
+
+  const adsPct     = m.total > 0 ? Math.round(m.ads     / m.total * 100) : 0;
+  const organicPct = m.total > 0 ? Math.round(m.organic / m.total * 100) : 0;
+  document.getElementById('kpi-ads-pct').textContent     = adsPct + '% del total';
+  document.getElementById('kpi-organic-pct').textContent = organicPct + '% del total';
+
+  const barPct = Math.min(Math.round(m.total / TARGET_MSGS * 100), 100);
+  document.getElementById('bar-total').style.width  = barPct + '%';
+  document.getElementById('kpi-total-pct').textContent = barPct + '%';
+  setBadge('badge-total', m.total, TARGET_MSGS);
+
+  const lbl = document.getElementById('monthly-source-label');
+  if (lbl) lbl.textContent = monthLabel(key);
+
+  renderSourceTable(key);
+  updateOrgChart(key);
+}
+
+function renderSourceTable(key) {
+  const m = globalMonthly[key] || { total:0, sources:{} };
+  const container = document.getElementById('monthly-source-table');
+  if (!container) return;
+
+  const rows = Object.entries(m.sources)
+    .sort((a,b) => b[1] - a[1]);
+
+  if (rows.length === 0) {
+    container.innerHTML = '<div style="padding:1rem 1.25rem;font-size:12px;color:var(--muted);">Sin datos para este mes.</div>';
+    return;
+  }
+
+  const maxVal = Math.max(...rows.map(([,v]) => v), 1);
+
+  const adsTot = rows.filter(([s]) => isAds(s)).reduce((acc,[,v]) => acc+v, 0);
+  const orgTot = rows.filter(([s]) => !isAds(s)).reduce((acc,[,v]) => acc+v, 0);
+
+  const typeTag = (src) => {
+    if (isAds(src)) return `<span style="font-size:10px;padding:2px 7px;border-radius:20px;background:rgba(74,143,240,0.12);color:var(--accent2);font-weight:500;">Ads</span>`;
+    return `<span style="font-size:10px;padding:2px 7px;border-radius:20px;background:rgba(74,240,154,0.12);color:var(--green);font-weight:500;">Orgánico</span>`;
+  };
+
+  const pctOfTotal = v => m.total > 0 ? Math.round(v / m.total * 100) : 0;
+
+  const bodyRows = rows.map(([src, val]) => {
+    const barW = Math.round(val / maxVal * 100);
+    const barColor = isAds(src) ? 'var(--accent2)' : 'var(--green)';
+    return `<tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:10px 16px;font-weight:500;font-size:13px;">${src}</td>
+      <td style="padding:10px 16px;">${typeTag(src)}</td>
+      <td style="padding:10px 16px;min-width:140px;">
+        <div style="background:rgba(255,255,255,0.05);border-radius:3px;height:6px;">
+          <div style="background:${barColor};border-radius:3px;height:6px;width:${barW}%;"></div>
+        </div>
+      </td>
+      <td style="padding:10px 16px;text-align:right;font-family:var(--mono);font-weight:500;">${val.toLocaleString()}</td>
+      <td style="padding:10px 16px;text-align:right;font-family:var(--mono);color:var(--muted);font-size:12px;">${pctOfTotal(val)}%</td>
+    </tr>`;
+  }).join('');
+
+  // Totals rows
+  const totalsRows = `
+    <tr style="border-top:1px solid var(--border);background:rgba(74,143,240,0.04);">
+      <td style="padding:10px 16px;font-weight:500;color:var(--accent2);" colspan="2">Subtotal Ads</td>
+      <td style="padding:10px 16px;"></td>
+      <td style="padding:10px 16px;text-align:right;font-family:var(--mono);font-weight:500;color:var(--accent2);">${adsTot.toLocaleString()}</td>
+      <td style="padding:10px 16px;text-align:right;font-family:var(--mono);color:var(--accent2);font-size:12px;">${pctOfTotal(adsTot)}%</td>
+    </tr>
+    <tr style="background:rgba(74,240,154,0.04);">
+      <td style="padding:10px 16px;font-weight:500;color:var(--green);" colspan="2">Subtotal Orgánico</td>
+      <td style="padding:10px 16px;"></td>
+      <td style="padding:10px 16px;text-align:right;font-family:var(--mono);font-weight:500;color:var(--green);">${orgTot.toLocaleString()}</td>
+      <td style="padding:10px 16px;text-align:right;font-family:var(--mono);color:var(--green);font-size:12px;">${pctOfTotal(orgTot)}%</td>
+    </tr>
+    <tr style="border-top:2px solid var(--border);background:rgba(255,255,255,0.02);">
+      <td style="padding:10px 16px;font-weight:500;" colspan="2">Total</td>
+      <td style="padding:10px 16px;"></td>
+      <td style="padding:10px 16px;text-align:right;font-family:var(--mono);font-weight:500;">${m.total.toLocaleString()}<span style="font-size:11px;color:var(--muted);">/2,520</span></td>
+      <td style="padding:10px 16px;text-align:right;font-family:var(--mono);color:var(--muted);font-size:12px;">${pctOfTotal(m.total)}%</td>
+    </tr>`;
+
+  container.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <thead>
+      <tr style="border-bottom:1px solid var(--border);">
+        <th style="text-align:left;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Fuente</th>
+        <th style="text-align:left;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Tipo</th>
+        <th style="text-align:left;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;min-width:140px;">Volumen</th>
+        <th style="text-align:right;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Mensajes</th>
+        <th style="text-align:right;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">% total</th>
+      </tr>
+    </thead>
+    <tbody>${bodyRows}${totalsRows}</tbody>
+  </table>`;
+}
+
+// Weekly helpers
+function getWeeksOfMonth(year, month) {
+  const weeks = [];
+  const firstDay = new Date(year, month, 1);
+  const lastDay  = new Date(year, month + 1, 0);
+  let start = new Date(firstDay);
+  const dow = start.getDay();
+  const diff = (dow === 0) ? -6 : 1 - dow;
+  start.setDate(start.getDate() + diff);
+  while (start <= lastDay) {
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    const since = new Date(Math.max(start, firstDay));
+    const until = new Date(Math.min(end, lastDay));
+    const fmt = d => `${d.getMonth()+1}/${d.getDate()}`;
+    weeks.push({ label: fmt(since) + ' – ' + fmt(until), since, until });
+    start.setDate(start.getDate() + 7);
+  }
+  return weeks;
+}
+
+function updateWeekly(key) {
+  const parts = key.split('-');
+  const year  = parseInt(parts[0]);
+  const month = parseInt(parts[1]) - 1;
+  const lbl = monthLabel(key);
+
+  document.getElementById('weekly-month-label').textContent = lbl;
+
+  // Update summary KPIs
+  const m = globalMonthly[key] || { total:0, ads:0, organic:0 };
+  document.getElementById('w-kpi-total').textContent   = m.total.toLocaleString();
+  document.getElementById('w-kpi-ads').textContent     = m.ads.toLocaleString();
+  document.getElementById('w-kpi-organic').textContent = m.organic.toLocaleString();
+  const adsPct     = m.total > 0 ? Math.round(m.ads / m.total * 100) : 0;
+  const organicPct = m.total > 0 ? Math.round(m.organic / m.total * 100) : 0;
+  document.getElementById('w-kpi-ads-pct').textContent     = adsPct + '% del total';
+  document.getElementById('w-kpi-organic-pct').textContent = organicPct + '% del total';
+  setBadge('w-badge-total', m.total, TARGET_MSGS);
+
+  const weeks = getWeeksOfMonth(year, month);
+  const weekStats = weeks.map(w => ({ ...w, total:0, ads:0, organic:0 }));
+
+  for (const r of globalRawRows) {
+    if (r.dt.getFullYear() !== year || r.dt.getMonth() !== month) continue;
+    for (const w of weekStats) {
+      if (r.dt >= w.since && r.dt <= w.until) {
+        w.total++;
+        if (r.ads) w.ads++;
+        else w.organic++;
+        break;
+      }
+    }
+  }
+
+  const today = new Date();
+  today.setHours(23,59,59,999);
+
+  const tableRows = weekStats.map(w => {
+    const isCurrent = w.since <= today && w.until >= today;
+    const isFuture  = w.since > today;
+    const totalColor = w.total >= TARGET_WEEKLY ? 'var(--green)' : w.total >= TARGET_WEEKLY * 0.7 ? 'var(--warn)' : 'var(--danger)';
+
+    let badge = '';
+    if (isFuture && w.total === 0) {
+      badge = '<span style="color:var(--muted);font-size:11px;">—</span>';
+    } else if (isCurrent) {
+      const pace = w.total / ((today - w.since) / 86400000 + 1) * 7;
+      const onPace = pace >= TARGET_WEEKLY * 0.8;
+      badge = `<span style="font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;background:${onPace ? 'rgba(74,240,154,0.12)' : 'rgba(240,168,74,0.12)'};color:${onPace ? 'var(--green)' : 'var(--warn)'};">● En curso</span>`;
+    } else {
+      const good = w.total >= TARGET_WEEKLY;
+      const ok   = w.total >= TARGET_WEEKLY * 0.7;
+      badge = `<span style="font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;background:${good ? 'rgba(74,240,154,0.12)' : ok ? 'rgba(240,168,74,0.12)' : 'rgba(240,90,74,0.12)'};color:${good ? 'var(--green)' : ok ? 'var(--warn)' : 'var(--danger)'};">${good ? '✓ Meta' : ok ? '⚠ Cerca' : '✗ Bajo'}</span>`;
+    }
+
+    const rowBg = isCurrent ? 'background:rgba(200,240,74,0.03);' : '';
+
+    return `<tr style="border-bottom:1px solid var(--border);${rowBg}">
+      <td style="padding:10px 16px;font-family:var(--mono);font-size:12px;color:${isCurrent ? 'var(--text)' : 'var(--muted)'};">${w.label}${isCurrent ? ' <span style="font-size:10px;color:var(--accent);">← esta semana</span>' : ''}</td>
+      <td style="padding:10px 16px;text-align:right;font-family:var(--mono);font-weight:500;color:${isFuture && w.total===0 ? 'var(--muted)' : totalColor};">${w.total === 0 && isFuture ? '—' : w.total.toLocaleString()}<span style="font-size:11px;color:var(--muted);">/630</span></td>
+      <td style="padding:10px 16px;text-align:right;font-family:var(--mono);color:var(--accent2);">${isFuture && w.ads===0 ? '—' : w.ads.toLocaleString()}</td>
+      <td style="padding:10px 16px;text-align:right;font-family:var(--mono);color:var(--green);">${isFuture && w.organic===0 ? '—' : w.organic.toLocaleString()}</td>
+      <td style="padding:10px 16px;text-align:center;">${badge}</td>
+    </tr>`;
+  }).join('');
+
+  // Month totals row
+  const totW   = weekStats.reduce((s,w) => s+w.total, 0);
+  const adsW   = weekStats.reduce((s,w) => s+w.ads, 0);
+  const orgW   = weekStats.reduce((s,w) => s+w.organic, 0);
+  const totColor = totW >= TARGET_MSGS ? 'var(--green)' : totW >= TARGET_MSGS*0.8 ? 'var(--warn)' : 'var(--danger)';
+  const totalsRow = `<tr style="border-top:2px solid var(--border);background:rgba(255,255,255,0.02);">
+    <td style="padding:10px 16px;font-weight:500;font-size:12px;color:var(--muted);">Total del mes</td>
+    <td style="padding:10px 16px;text-align:right;font-family:var(--mono);font-weight:500;color:${totColor};">${totW.toLocaleString()}<span style="font-size:11px;color:var(--muted);">/2,520</span></td>
+    <td style="padding:10px 16px;text-align:right;font-family:var(--mono);color:var(--accent2);">${adsW.toLocaleString()}</td>
+    <td style="padding:10px 16px;text-align:right;font-family:var(--mono);color:var(--green);">${orgW.toLocaleString()}</td>
+    <td style="padding:10px 16px;"></td>
+  </tr>`;
+
+  document.getElementById('weekly-table-container').innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border);">
+          <th style="text-align:left;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Semana</th>
+          <th style="text-align:right;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Total</th>
+          <th style="text-align:right;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Ads</th>
+          <th style="text-align:right;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Orgánico</th>
+          <th style="text-align:center;padding:10px 16px;font-weight:500;color:var(--muted);font-size:11px;">Status</th>
+        </tr>
+      </thead>
+      <tbody>${tableRows}${totalsRow}</tbody>
+    </table>`;
+
+  // Weekly chart
+  const destroy = id => { if (charts[id]) { charts[id].destroy(); delete charts[id]; } };
+  destroy('weekly');
+  const tickOpts = {color:'#7a7a85', font:{size:10, family:"'DM Mono', monospace"}};
+  const gridOpts = {color:'rgba(255,255,255,0.05)'};
+  charts.weekly = new Chart(document.getElementById('cWeekly'), {
+    type: 'bar',
+    data: {
+      labels: weekStats.map(w => w.label),
+      datasets: [
+        { label:'Ads',      data: weekStats.map(w => w.ads),     backgroundColor:'#4a8ff0', borderRadius:3 },
+        { label:'Orgánico', data: weekStats.map(w => w.organic), backgroundColor:'#4af09a', borderRadius:3 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { stacked: true, ticks: tickOpts, grid: gridOpts },
+        y: { stacked: true, ticks: { ...tickOpts, autoSkip:true }, grid: gridOpts, beginAtZero: true }
+      }
+    }
+  });
+}
+
+function updateOrgChart(key) {
+  const m = globalMonthly[key] || { sources:{} };
+  const organicSources = Object.entries(m.sources)
+    .filter(([s]) => !isAds(s))
+    .sort((a,b) => b[1]-a[1]);
+
+  const destroy = id => { if (charts[id]) { charts[id].destroy(); delete charts[id]; } };
+  destroy('org');
+  if (organicSources.length === 0) return;
+
+  const colors = ['#4af09a','#c8f04a','#4a8ff0','#f0a84a','#f05a4a','#9a4af0','#f04a9a','#4af0d4'];
+  charts.org = new Chart(document.getElementById('cOrganic'), {
+    type: 'bar',
+    data: {
+      labels: organicSources.map(([s]) => s.length > 20 ? s.slice(0,18)+'…' : s),
+      datasets: [{ data: organicSources.map(([,v]) => v), backgroundColor: organicSources.map((_,i) => colors[i % colors.length]), borderRadius: 3 }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: {color:'#7a7a85', font:{size:10, family:"'DM Mono', monospace"}}, grid:{color:'rgba(255,255,255,0.05)'}, beginAtZero:true },
+        y: { ticks: {color:'#7a7a85', font:{size:10, family:"'DM Mono', monospace"}}, grid:{color:'rgba(255,255,255,0.05)'} }
+      }
+    }
+  });
+}
+
+function renderDashboard() {
+  const keys = Object.keys(globalMonthly).sort();
+  if (keys.length === 0) return;
+
+  // Populate selectors
+  const selectors = ['month-selector','month-selector-weekly'];
+  selectors.forEach(id => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = [...keys].reverse().map(k => `<option value="${k}">${monthLabel(k).toUpperCase()}</option>`).join('');
+  });
+
+  const now = new Date();
+  const curKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const defaultKey = keys.includes(curKey) ? curKey : keys[keys.length-1];
+  selectors.forEach(id => { document.getElementById(id).value = defaultKey; });
+
+  // Charts — full history
+  const tickOpts = {color:'#7a7a85', font:{size:10, family:"'DM Mono', monospace"}, autoSkip:false, maxRotation:45};
+  const gridOpts = {color:'rgba(255,255,255,0.05)'};
+  const destroy  = id => { if (charts[id]) { charts[id].destroy(); delete charts[id]; } };
+
+  const labels  = keys.map(monthLabel);
+  const totals  = keys.map(k => globalMonthly[k].total);
+  const ads     = keys.map(k => globalMonthly[k].ads);
+  const organic = keys.map(k => globalMonthly[k].organic);
+  const adsPct  = keys.map(k => globalMonthly[k].total > 0 ? Math.round(globalMonthly[k].ads / globalMonthly[k].total * 100) : 0);
+  const orgPct  = keys.map(k => globalMonthly[k].total > 0 ? Math.round(globalMonthly[k].organic / globalMonthly[k].total * 100) : 0);
+
+  destroy('vol');
+  charts.vol = new Chart(document.getElementById('cVolumen'), {
+    type: 'bar',
+    data: { labels, datasets: [
+      { label:'Total',    data: totals,  backgroundColor:'rgba(200,240,74,0.2)', borderColor:'#c8f04a', borderWidth:1, borderRadius:3, type:'line', fill:true, tension:0.3, pointRadius:3, pointBackgroundColor:'#c8f04a' },
+      { label:'Ads',      data: ads,     backgroundColor:'#4a8ff0', borderRadius:3 },
+      { label:'Orgánico', data: organic, backgroundColor:'#4af09a', borderRadius:3 }
+    ]},
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{x:{ticks:tickOpts, grid:gridOpts}, y:{ticks:{...tickOpts, autoSkip:true}, grid:gridOpts, beginAtZero:true}} }
+  });
+
+  destroy('mix');
+  charts.mix = new Chart(document.getElementById('cMix'), {
+    type: 'line',
+    data: { labels, datasets: [
+      { label:'Ads %',      data: adsPct,  borderColor:'#4a8ff0', backgroundColor:'rgba(74,143,240,0.08)', fill:true, tension:0.3, pointRadius:3, pointBackgroundColor:'#4a8ff0' },
+      { label:'Orgánico %', data: orgPct,  borderColor:'#4af09a', backgroundColor:'rgba(74,240,154,0.08)', fill:true, tension:0.3, pointRadius:3, pointBackgroundColor:'#4af09a' }
+    ]},
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{x:{ticks:tickOpts, grid:gridOpts}, y:{ticks:{...tickOpts, autoSkip:true, callback:v=>v+'%'}, grid:gridOpts, beginAtZero:true, max:100}} }
+  });
+
+  updateMonthly(defaultKey);
+  updateWeekly(defaultKey);
+
+  document.getElementById('last-updated').textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+}
+</script>
+</body>
+</html>
