@@ -135,13 +135,13 @@
       </div>
 
       <!-- KPI Cards -->
-      <div class="kpi-grid">
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));">
         <div class="kpi-card" style="--card-accent: var(--accent)">
           <div class="kpi-label">Total mensajes</div>
           <div class="kpi-value" id="kpi-total">—</div>
           <div class="target-bar-wrap">
             <div class="target-bar-bg"><div class="target-bar-fill" id="bar-total" style="width:0%"></div></div>
-            <div class="target-label">Target: 2,520 | <span id="kpi-total-pct">—</span></div>
+            <div class="target-label">Target: 6,900 | <span id="kpi-total-pct">—</span></div>
           </div>
           <div class="kpi-badge" id="badge-total">—</div>
         </div>
@@ -154,6 +154,29 @@
           <div class="kpi-label">Mensajes orgánicos</div>
           <div class="kpi-value" id="kpi-organic">—</div>
           <div class="kpi-meta" id="kpi-organic-pct">—% del total</div>
+        </div>
+        <div class="kpi-card" style="--card-accent: var(--warn)">
+          <div class="kpi-label">Llamadas via Setter</div>
+          <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;">
+            <div class="kpi-value" id="kpi-setter-booked" style="margin-bottom:0;">—</div>
+            <div style="font-size:16px;color:var(--muted);font-family:var(--mono);" id="kpi-setter-booked-sub">(—)</div>
+          </div>
+          <div class="kpi-meta">llamadas agendadas este mes</div>
+          <div class="target-bar-wrap">
+            <div class="target-bar-bg"><div class="target-bar-fill" id="bar-setter-booked" style="width:0%;background:var(--warn)"></div></div>
+            <div class="target-label">Target: 62 llamadas/mes</div>
+          </div>
+          <div class="kpi-badge" id="badge-setter-booked">—</div>
+        </div>
+        <div class="kpi-card" style="--card-accent: var(--accent);grid-column:span 2;">
+          <div class="kpi-label">Conv. rate mensajes → llamadas</div>
+          <div class="kpi-value" id="kpi-conv-rate">—</div>
+          <div class="kpi-meta">llamadas Setter ÷ total mensajes del mes</div>
+          <div class="target-bar-wrap">
+            <div class="target-bar-bg"><div class="target-bar-fill" id="bar-conv-rate" style="width:0%"></div></div>
+            <div class="target-label">Baseline histórico (Ene–Mar 26): 0.90%</div>
+          </div>
+          <div class="kpi-badge" id="badge-conv-rate">—</div>
         </div>
       </div>
 
@@ -200,7 +223,7 @@
         <div class="kpi-card" style="--card-accent: var(--accent)">
           <div class="kpi-label">Total del mes</div>
           <div class="kpi-value" id="w-kpi-total">—</div>
-          <div class="target-label">Target: 2,520</div>
+          <div class="target-label">Target: 6,900</div>
           <div class="kpi-badge" id="w-badge-total">—</div>
         </div>
         <div class="kpi-card" style="--card-accent: var(--accent2)">
@@ -219,7 +242,7 @@
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:2rem;">
         <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
           <div style="font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">Desglose semanal — <span id="weekly-month-label">mes actual</span></div>
-          <div style="font-size:11px;color:var(--muted);">Lun–Dom | target: ~630/semana</div>
+          <div style="font-size:11px;color:var(--muted);">Lun–Dom | target: ~1,725/semana</div>
         </div>
         <div id="weekly-table-container" style="overflow-x:auto;"></div>
       </div>
@@ -240,13 +263,16 @@
 
 <script>
 const SHEET_ID = '1ctM6K8hQfh73bi7f-MtXkqW3BaPxU73NZf8xPJQUEOc';
-const TAB_NAME = 'DM TRACKING INDEX';
-const TARGET_MSGS = 2520;
-const TARGET_WEEKLY = 630;
+const TAB_DM     = 'DM TRACKING INDEX';
+const TAB_LEADS  = 'Leads applied';
+const TARGET_MSGS   = 6900;
+const TARGET_WEEKLY = Math.round(6900 / 4);
+const BASELINE_CR   = 0.90; // % histórico Ene-Mar 2026
 
 let apiKey = localStorage.getItem('gsheets_api_key') || '';
 let globalMonthly = {};
 let globalRawRows = [];
+let globalSetterBooked = {}; // { 'YYYY-MM': count }
 let charts = {};
 
 if (apiKey) { showLoading(); loadData(); }
@@ -271,12 +297,13 @@ async function loadData() {
   document.getElementById('loading').style.display = 'flex';
   document.getElementById('dashboard').style.display = 'none';
   try {
-    const tabEncoded = encodeURIComponent(TAB_NAME);
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${tabEncoded}!A:F?key=${apiKey}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('API error ' + res.status);
-    const json = await res.json();
-    processData(json.values);
+    const urlDM    = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(TAB_DM)}!A:F?key=${apiKey}`;
+    const urlLeads = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(TAB_LEADS)}!A:Z?key=${apiKey}`;
+    const [resDM, resLeads] = await Promise.all([fetch(urlDM), fetch(urlLeads)]);
+    if (!resDM.ok || !resLeads.ok) throw new Error('API error');
+    const [jsonDM, jsonLeads] = await Promise.all([resDM.json(), resLeads.json()]);
+    processLeadsData(jsonLeads.values);
+    processData(jsonDM.values);
   } catch(e) {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('setup-screen').style.display = 'flex';
@@ -284,6 +311,36 @@ async function loadData() {
     localStorage.removeItem('gsheets_api_key');
     apiKey = '';
   }
+}
+
+function parseDateLeads(s) {
+  if (!s) return null;
+  s = s.trim();
+  try { return new Date(s); } catch(e) {}
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) return new Date(+m[3], +m[1]-1, +m[2]);
+  return null;
+}
+
+function processLeadsData(rows) {
+  if (!rows || rows.length < 2) return;
+  const headers = rows[0].map(h => h.trim().toLowerCase());
+  const iBooked   = headers.findIndex(h => h === 'booked call (qualified)');
+  const iCallDate = headers.findIndex(h => h === 'sales call booked date');
+  const iSource   = headers.findIndex(h => h === 'last attribution');
+
+  const result = {};
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if ((r[iBooked] || '').trim().toLowerCase() !== 'yes') continue;
+    const src = (r[iSource] || '').trim().toLowerCase();
+    if (!src.includes('setter')) continue;
+    const dt = parseDateLeads(r[iCallDate]);
+    if (!dt) continue;
+    const key = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;
+    result[key] = (result[key] || 0) + 1;
+  }
+  globalSetterBooked = result;
 }
 
 function parseTS(str) {
@@ -389,6 +446,30 @@ function updateMonthly(key) {
   document.getElementById('kpi-total-pct').textContent = barPct + '%';
   setBadge('badge-total', m.total, TARGET_MSGS);
 
+  // Setter booked card
+  const setterBooked = globalSetterBooked[key] || 0;
+  const bookedPct    = Math.min(Math.round(setterBooked / 62 * 100), 100);
+  document.getElementById('kpi-setter-booked').textContent     = setterBooked;
+  document.getElementById('kpi-setter-booked-sub').textContent = setterBooked > 0 ? `(${bookedPct}% del target)` : '(—)';
+  document.getElementById('bar-setter-booked').style.width     = bookedPct + '%';
+  setBadge('badge-setter-booked', setterBooked, 62);
+
+  // Conversion rate card
+  const convRate = m.total > 0 && setterBooked > 0 ? (setterBooked / m.total * 100) : 0;
+  document.getElementById('kpi-conv-rate').textContent = convRate > 0 ? convRate.toFixed(2) + '%' : '—';
+  const convBarPct = Math.min(Math.round(convRate / BASELINE_CR * 100), 100);
+  document.getElementById('bar-conv-rate').style.width = convBarPct + '%';
+  const convEl = document.getElementById('badge-conv-rate');
+  if (convRate === 0) {
+    convEl.className = 'kpi-badge badge-warn'; convEl.textContent = '— sin datos';
+  } else if (convRate >= BASELINE_CR) {
+    convEl.className = 'kpi-badge badge-green'; convEl.textContent = `✓ Sobre baseline (${BASELINE_CR}%)`;
+  } else if (convRate >= BASELINE_CR * 0.7) {
+    convEl.className = 'kpi-badge badge-warn';  convEl.textContent = `⚠ Bajo baseline (${BASELINE_CR}%)`;
+  } else {
+    convEl.className = 'kpi-badge badge-red';   convEl.textContent = `✗ Muy bajo vs baseline`;
+  }
+
   const lbl = document.getElementById('monthly-source-label');
   if (lbl) lbl.textContent = monthLabel(key);
 
@@ -454,7 +535,7 @@ function renderSourceTable(key) {
     <tr style="border-top:2px solid var(--border);background:rgba(255,255,255,0.02);">
       <td style="padding:10px 16px;font-weight:500;" colspan="2">Total</td>
       <td style="padding:10px 16px;"></td>
-      <td style="padding:10px 16px;text-align:right;font-family:var(--mono);font-weight:500;">${m.total.toLocaleString()}<span style="font-size:11px;color:var(--muted);">/2,520</span></td>
+      <td style="padding:10px 16px;text-align:right;font-family:var(--mono);font-weight:500;">${m.total.toLocaleString()}<span style="font-size:11px;color:var(--muted);">/6,900</span></td>
       <td style="padding:10px 16px;text-align:right;font-family:var(--mono);color:var(--muted);font-size:12px;">${pctOfTotal(m.total)}%</td>
     </tr>`;
 
@@ -566,7 +647,7 @@ function updateWeekly(key) {
   const totColor = totW >= TARGET_MSGS ? 'var(--green)' : totW >= TARGET_MSGS*0.8 ? 'var(--warn)' : 'var(--danger)';
   const totalsRow = `<tr style="border-top:2px solid var(--border);background:rgba(255,255,255,0.02);">
     <td style="padding:10px 16px;font-weight:500;font-size:12px;color:var(--muted);">Total del mes</td>
-    <td style="padding:10px 16px;text-align:right;font-family:var(--mono);font-weight:500;color:${totColor};">${totW.toLocaleString()}<span style="font-size:11px;color:var(--muted);">/2,520</span></td>
+    <td style="padding:10px 16px;text-align:right;font-family:var(--mono);font-weight:500;color:${totColor};">${totW.toLocaleString()}<span style="font-size:11px;color:var(--muted);">/6,900</span></td>
     <td style="padding:10px 16px;text-align:right;font-family:var(--mono);color:var(--accent2);">${adsW.toLocaleString()}</td>
     <td style="padding:10px 16px;text-align:right;font-family:var(--mono);color:var(--green);">${orgW.toLocaleString()}</td>
     <td style="padding:10px 16px;"></td>
