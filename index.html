@@ -742,22 +742,7 @@ function processData(rows) {
 
     if (!monthly[key]) monthly[key] = {booked:0,showed:0,noshow:0,cancelled:0,sales:0,refunds:0,sources:{}};
 
-    const rawSrc = (r[iSource] || '').trim();
-    const rawSrcLower = rawSrc.toLowerCase();
-    let src = rawSrc || 'Other'; // default: use the actual value from the sheet
-    if (!rawSrc) src = 'Other';
-    else if (rawSrcLower.includes('instagram')) src = 'Instagram';
-    else if (rawSrcLower.includes('direct')) src = 'Direct Traffic';
-    else if (rawSrcLower.includes('setter')) src = 'Setter';
-    else if (rawSrcLower.includes('podcast')) src = 'Podcast';
-    else if (rawSrcLower.includes('organic application')) src = 'Organic Application';
-    else if (rawSrcLower.includes('organic')) src = 'Organic Search';
-    else if (rawSrcLower.includes('email') || rawSrcLower.includes('lead magnet')) src = 'Email / Lead Magnet';
-    else if (rawSrcLower.includes('meta') || rawSrcLower.includes('facebook')) src = 'Meta / Facebook';
-    else if (rawSrcLower.includes('joey')) src = 'Joey Atlas';
-    else if (rawSrcLower.includes('youtube')) src = 'YouTube';
-    else if (rawSrcLower.includes('linkedin')) src = 'LinkedIn';
-    else if (rawSrcLower.includes('referral') || rawSrcLower.includes('referal')) src = 'Referral';
+    const src = (r[iSource] || '').trim() || 'Other';
 
     if (!monthly[key].sources[src]) monthly[key].sources[src] = {booked:0,showed:0,noshow:0,sales:0};
 
@@ -815,23 +800,7 @@ function processData(rows) {
       refunded: (r[iRefund] || '').trim().toUpperCase() === 'TRUE',
       name:  (firstName + ' ' + lastName).trim() || '—',
       email: (r[iEmail]  || '').trim() || '—',
-      source: (() => {
-        const raw = (r[iSource] || '').trim().toLowerCase();
-        if (!raw) return 'Other';
-        if (raw.includes('instagram')) return 'Instagram';
-        if (raw.includes('direct'))    return 'Direct Traffic';
-        if (raw.includes('setter'))    return 'Setter';
-        if (raw.includes('podcast'))   return 'Podcast';
-        if (raw.includes('organic application')) return 'Organic Application';
-        if (raw.includes('organic'))   return 'Organic Search';
-        if (raw.includes('email') || raw.includes('lead magnet')) return 'Email / Lead Magnet';
-        if (raw.includes('meta') || raw.includes('facebook'))     return 'Meta / Facebook';
-        if (raw.includes('joey'))      return 'Joey Atlas';
-        if (raw.includes('youtube'))   return 'YouTube';
-        if (raw.includes('linkedin'))  return 'LinkedIn';
-        if (raw.includes('referral') || raw.includes('referal')) return 'Referral';
-        return (r[iSource] || '').trim() || 'Other';
-      })(),
+      source: (r[iSource] || '').trim() || 'Other',
     });
   }
 
