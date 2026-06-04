@@ -137,16 +137,16 @@
       <select id="month-selector" onchange="onMonthChange()"></select>
     </div>
     <div class="kpi-grid">
-      <div class="kpi-card" style="--card-accent: var(--accent2)">
-        <div class="kpi-label">Booked Calls</div>
+      <div class="kpi-card" style="--card-accent: var(--accent2); cursor:pointer" onclick="openLeadsModal('booked')">
+        <div class="kpi-label">Booked Calls ↗</div>
         <div class="kpi-value" id="kpi-booked">—</div>
         <div class="target-bar-wrap">
           <div class="target-bar-bg"><div class="target-bar-fill" id="bar-booked" style="width:0%"></div></div>
           <div class="target-label">Target: 62 | <span id="kpi-booked-pct">—</span></div>
         </div>
       </div>
-      <div class="kpi-card" style="--card-accent: var(--warn)">
-        <div class="kpi-label">Calls Showed (Show Rate)</div>
+      <div class="kpi-card" style="--card-accent: var(--warn); cursor:pointer" onclick="openLeadsModal('showed')">
+        <div class="kpi-label">Calls Showed (Show Rate) ↗</div>
         <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;">
           <div class="kpi-value" id="kpi-show-abs" style="margin-bottom:0;">—</div>
           <div style="font-size:16px;color:var(--muted);font-family:var(--mono);" id="kpi-show">(—)</div>
@@ -158,8 +158,8 @@
         </div>
         <div class="kpi-badge" id="badge-show">—</div>
       </div>
-      <div class="kpi-card" style="--card-accent: var(--danger)">
-        <div class="kpi-label">Cancellations (Cancel Rate)</div>
+      <div class="kpi-card" style="--card-accent: var(--danger); cursor:pointer" onclick="openLeadsModal('cancelled')">
+        <div class="kpi-label">Cancellations (Cancel Rate) ↗</div>
         <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;">
           <div class="kpi-value" id="kpi-cancel-abs" style="margin-bottom:0;">—</div>
           <div style="font-size:16px;color:var(--muted);font-family:var(--mono);" id="kpi-cancel">(—)</div>
@@ -168,8 +168,8 @@
         <div class="target-label" style="margin-top:8px;">Target: ≤ 18%</div>
         <div class="kpi-badge" id="badge-cancel">—</div>
       </div>
-      <div class="kpi-card" style="--card-accent: var(--accent2)">
-        <div class="kpi-label">Sales (Close Rate)</div>
+      <div class="kpi-card" style="--card-accent: var(--accent2); cursor:pointer" onclick="openLeadsModal('sales')">
+        <div class="kpi-label">Sales (Close Rate) ↗</div>
         <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;">
           <div class="kpi-value" id="kpi-close-abs" style="margin-bottom:0;">—</div>
           <div style="font-size:16px;color:var(--muted);font-family:var(--mono);" id="kpi-close">(—)</div>
@@ -181,14 +181,14 @@
         </div>
         <div class="kpi-badge" id="badge-close">—</div>
       </div>
-      <div class="kpi-card" style="--card-accent: #f05a4a">
-        <div class="kpi-label">Refunds</div>
+      <div class="kpi-card" style="--card-accent: #f05a4a; cursor:pointer" onclick="openLeadsModal('refunds')">
+        <div class="kpi-label">Refunds ↗</div>
         <div class="kpi-value" id="kpi-refunds" style="color:var(--danger)">—</div>
         <div class="kpi-meta">refunded sales</div>
         <div class="target-label" style="margin-top:8px;">Target: ≤ 2 | historical avg: 1.4</div>
       </div>
-      <div class="kpi-card" style="--card-accent: var(--green)">
-        <div class="kpi-label">Net Sales</div>
+      <div class="kpi-card" style="--card-accent: var(--green); cursor:pointer" onclick="openLeadsModal('netsales')">
+        <div class="kpi-label">Net Sales ↗</div>
         <div class="kpi-value" id="kpi-net-sales" style="color:var(--green)">—</div>
         <div class="target-bar-wrap">
           <div class="target-bar-bg"><div class="target-bar-fill" id="bar-net-sales" style="width:0%"></div></div>
@@ -418,6 +418,20 @@
       </div>
     </div>
 
+
+<!-- LEADS MODAL -->
+<div id="leads-modal-overlay" onclick="closeLeadsModal(event)" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:flex-start;justify-content:center;padding:40px 24px;overflow-y:auto;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);width:100%;max-width:800px;overflow:hidden;position:relative;">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div id="leads-modal-title" style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;">—</div>
+        <div id="leads-modal-meta" style="font-size:12px;color:var(--muted);font-family:var(--mono);margin-top:2px;">—</div>
+      </div>
+      <button onclick="document.getElementById('leads-modal-overlay').style.display='none'" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer;color:var(--muted);font-size:16px;display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
+    <div id="leads-modal-body" style="overflow-y:auto;max-height:70vh;"></div>
+  </div>
+</div>
     </div><!-- end tab-monthly -->
 
     <!-- Weekly tab -->
@@ -791,11 +805,34 @@ function processData(rows) {
     let csNorm = csRaw;
     if (csRaw === 'disqualified on sales call' || csRaw === 'follow up') csNorm = 'showed';
     else if (csRaw === 'confirmed') csNorm = 'pending';
+    const iFirst  = headers.findIndex(h => h.includes('first name') || h === 'first');
+    const iLast   = headers.findIndex(h => h.includes('last name')  || h === 'last');
+    const iEmail  = headers.findIndex(h => h.includes('email'));
+    const firstName = (r[iFirst] || '').trim();
+    const lastName  = (r[iLast]  || '').trim();
     window.globalWeeklyRows.push({
       callDt,
       cs: csNorm,
       sold: (r[iSale] || '').trim().toLowerCase() === 'yes',
-      refunded: (r[iRefund] || '').trim().toUpperCase() === 'TRUE'
+      refunded: (r[iRefund] || '').trim().toUpperCase() === 'TRUE',
+      name:  (firstName + ' ' + lastName).trim() || '—',
+      email: (r[iEmail]  || '').trim() || '—',
+      source: (() => {
+        const raw = (r[iSource] || '').trim().toLowerCase();
+        if (!raw) return 'Other';
+        if (raw.includes('instagram')) return 'Instagram';
+        if (raw.includes('direct'))    return 'Direct Traffic';
+        if (raw.includes('setter'))    return 'Setter';
+        if (raw.includes('podcast'))   return 'Podcast';
+        if (raw.includes('organic'))   return 'Organic Search';
+        if (raw.includes('email') || raw.includes('lead magnet')) return 'Email / Lead Magnet';
+        if (raw.includes('meta') || raw.includes('facebook'))     return 'Meta / Facebook';
+        if (raw.includes('joey'))      return 'Joey Atlas';
+        if (raw.includes('youtube'))   return 'YouTube';
+        if (raw.includes('linkedin'))  return 'LinkedIn';
+        if (raw.includes('referral') || raw.includes('referal')) return 'Referral';
+        return (r[iSource] || '').trim() || 'Other';
+      })(),
     });
   }
 
@@ -1368,6 +1405,85 @@ function renderDashboard(monthly) {
   document.getElementById('loading').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
 }
+
+
+// ── LEADS MODAL ────────────────────────────────────────────────
+function openLeadsModal(type) {
+  const key = document.getElementById('month-selector').value;
+  if (!key || !window.globalWeeklyRows) return;
+
+  const [y, m] = key.split('-').map(Number);
+  const monthStart = new Date(y, m-1, 1);
+  const monthEnd   = new Date(y, m, 0, 23, 59, 59);
+
+  const rows = window.globalWeeklyRows.filter(r => r.callDt >= monthStart && r.callDt <= monthEnd);
+
+  const titles = {
+    booked:   'All Booked Calls',
+    showed:   'Calls Showed',
+    cancelled:'Cancelled Calls',
+    sales:    'Sales (Gross)',
+    refunds:  'Refunds',
+    netsales: 'Net Sales',
+  };
+
+  const filters = {
+    booked:   () => true,
+    showed:   r => r.cs === 'showed',
+    cancelled:r => r.cs === 'cancelled',
+    sales:    r => r.sold,
+    refunds:  r => r.refunded,
+    netsales: r => r.sold && !r.refunded,
+  };
+
+  const filtered = rows.filter(filters[type] || (() => true));
+
+  // We need name/email/source — pull from globalRawRows
+  const rawRows = window.globalRawRows || [];
+  const [yr, mo] = key.split('-').map(Number);
+  const mStart = new Date(yr, mo-1, 1);
+  const mEnd   = new Date(yr, mo, 0, 23, 59, 59);
+
+  const thStyle = 'font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600;padding:9px 16px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;background:var(--surface);z-index:2';
+
+  const tbody = filtered.length === 0
+    ? '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:32px;font-size:13px;">No records found</td></tr>'
+    : filtered.map(r => {
+        const fmt = d => d ? (d.getMonth()+1) + '/' + d.getDate() : '—';
+        return `<tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 16px;font-weight:500;font-size:13px;">${r.name || '—'}</td>
+          <td style="padding:10px 16px;font-family:var(--mono);font-size:12px;color:var(--muted);">${fmt(r.callDt)}</td>
+          <td style="padding:10px 16px;font-family:var(--mono);font-size:12px;color:var(--accent2);">${r.email || '—'}</td>
+          <td style="padding:10px 16px;font-size:12px;color:var(--muted);">${r.source || '—'}</td>
+        </tr>`;
+      }).join('');
+
+  document.getElementById('leads-modal-title').textContent = titles[type] || 'Records';
+  document.getElementById('leads-modal-meta').textContent  = `${filtered.length} record${filtered.length !== 1 ? 's' : ''} · ${key}`;
+  document.getElementById('leads-modal-body').innerHTML = `
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr>
+        <th style="${thStyle}">Full Name</th>
+        <th style="${thStyle}">Call Date</th>
+        <th style="${thStyle}">Email</th>
+        <th style="${thStyle}">Source</th>
+      </tr></thead>
+      <tbody>${tbody}</tbody>
+    </table>`;
+
+  const overlay = document.getElementById('leads-modal-overlay');
+  overlay.style.display = 'flex';
+}
+
+function closeLeadsModal(e) {
+  if (e.target === document.getElementById('leads-modal-overlay')) {
+    document.getElementById('leads-modal-overlay').style.display = 'none';
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('leads-modal-overlay').style.display = 'none';
+});
 
 // ── THEME ──────────────────────────────────────────────────────
 function applyTheme(theme) {
