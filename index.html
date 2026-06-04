@@ -750,6 +750,7 @@ function processData(rows) {
     else if (rawSrcLower.includes('direct')) src = 'Direct Traffic';
     else if (rawSrcLower.includes('setter')) src = 'Setter';
     else if (rawSrcLower.includes('podcast')) src = 'Podcast';
+    else if (rawSrcLower.includes('organic application')) src = 'Organic Application';
     else if (rawSrcLower.includes('organic')) src = 'Organic Search';
     else if (rawSrcLower.includes('email') || rawSrcLower.includes('lead magnet')) src = 'Email / Lead Magnet';
     else if (rawSrcLower.includes('meta') || rawSrcLower.includes('facebook')) src = 'Meta / Facebook';
@@ -821,6 +822,7 @@ function processData(rows) {
         if (raw.includes('direct'))    return 'Direct Traffic';
         if (raw.includes('setter'))    return 'Setter';
         if (raw.includes('podcast'))   return 'Podcast';
+        if (raw.includes('organic application')) return 'Organic Application';
         if (raw.includes('organic'))   return 'Organic Search';
         if (raw.includes('email') || raw.includes('lead magnet')) return 'Email / Lead Magnet';
         if (raw.includes('meta') || raw.includes('facebook'))     return 'Meta / Facebook';
