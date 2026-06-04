@@ -14,7 +14,12 @@
     --danger: #f05a4a; --warn: #f0a84a; --green: #4af09a; --radius: 12px;
     --mono: 'DM Mono', monospace; --sans: 'DM Sans', sans-serif;
   }
-  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; min-height: 100vh; }
+  [data-theme="light"] {
+    --bg: #f5f5f0; --surface: #ffffff; --border: rgba(0,0,0,0.08);
+    --text: #1a1a1e; --muted: #6b6b78; --accent: #5a8a00; --accent2: #2060c0;
+    --danger: #cc3322; --warn: #cc7700; --green: #1a8a4a;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; min-height: 100vh; transition: background 0.2s, color 0.2s; }
   #setup-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
   .setup-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.5rem; max-width: 480px; width: 100%; }
   .setup-card h1 { font-size: 20px; font-weight: 500; margin-bottom: 6px; }
@@ -114,6 +119,7 @@
     <div style="display:flex;align-items:center;gap:12px;">
       <span class="last-updated" id="last-updated"></span>
       <button class="btn-refresh" onclick="loadData()">↻ Refresh</button>
+      <button class="btn-refresh" id="theme-btn" onclick="toggleTheme()" style="margin-left:4px">☀️ Light</button>
     </div>
   </header>
   <main>
@@ -1362,6 +1368,28 @@ function renderDashboard(monthly) {
   document.getElementById('loading').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
 }
+
+// ── THEME ──────────────────────────────────────────────────────
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('theme-btn');
+  if (btn) {
+    btn.textContent = theme === 'light' ? '🌙 Dark' : '☀️ Light';
+  }
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('dl_theme', next);
+  applyTheme(next);
+}
+
+// Apply saved theme immediately
+(function() {
+  const saved = localStorage.getItem('dl_theme') || 'dark';
+  applyTheme(saved);
+})();
 </script>
 </body>
 </html>
