@@ -195,6 +195,12 @@
           <div class="target-label">Target: 17 | <span id="kpi-net-sales-pct">—</span></div>
         </div>
       </div>
+      <div class="kpi-card" style="--card-accent: #a78bfa;">
+        <div class="kpi-label">Closed This Month</div>
+        <div class="kpi-value" id="kpi-closed-month" style="color:#a78bfa">—</div>
+        <div class="kpi-meta">signed contracts this month</div>
+        <div class="target-label" style="margin-top:8px;">by sale date (any call month)</div>
+      </div>
     </div>
     <div class="alerts" id="alerts-container"></div>
     <!-- Monthly Source Table -->
@@ -524,6 +530,7 @@ const TARGET_CANCEL = 18;
 let apiKey = localStorage.getItem('gsheets_api_key') || '';
 let charts = {};
 let globalMonthly = {};
+let globalClosedByMonth = {};
 
 if (apiKey) { showLoading(); loadData(); }
 
@@ -727,11 +734,13 @@ function processData(rows) {
   const iBooked   = col('booked call (qualified)');
   const iStatus   = col('call status show vs no-show');
   const iSale     = col('end in sale yes/no');
+  const iSaleDate = col('end in sale date');
   const iRefund   = col('refund status');
   const iSource   = col('last attribution');
   const iCallDate = col('sales call booked date');
 
   const monthly = {};
+  globalClosedByMonth = {};
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
     // Gate: must have a valid call date (col K)
@@ -767,6 +776,13 @@ function processData(rows) {
     if ((r[iSale] || '').trim().toLowerCase() === 'yes') {
       monthly[key].sales++;
       monthly[key].sources[src].sales++;
+      // Also count by actual sale date month
+      const saleDt = parseDate((r[iSaleDate] || '').trim());
+      if (saleDt) {
+        const saleKey = `${saleDt.getFullYear()}-${String(saleDt.getMonth()+1).padStart(2,'0')}`;
+        if (!globalClosedByMonth[saleKey]) globalClosedByMonth[saleKey] = 0;
+        globalClosedByMonth[saleKey]++;
+      }
     }
     if ((r[iRefund] || '').trim().toUpperCase() === 'TRUE') {
       if (!monthly[key].sources[src].refunds) monthly[key].sources[src].refunds = 0;
@@ -839,6 +855,7 @@ function updateKPIs(curKey) {
   document.getElementById('kpi-close-abs').textContent = cur.sales;
   document.getElementById('kpi-refunds').textContent   = cur.refunds || 0;
   document.getElementById('kpi-net-sales').textContent = netSales;
+  document.getElementById('kpi-closed-month').textContent = globalClosedByMonth[curKey] || 0;
 
   const bookedPct   = Math.min(Math.round(cur.booked  / TARGET_BOOKED * 100), 100);
   const netSalePct  = Math.min(Math.round(netSales    / TARGET_SALES  * 100), 100);
